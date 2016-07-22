@@ -44972,18 +44972,18 @@ global.Blueprint3d = function(opts) {
 		   for (var i=0; cornersManyRoomsList!= null && i<cornersManyRoomsList.length; i++){
 			for (var j=0; cornersManyRoomsList[i].wallStarts!=null && j<cornersManyRoomsList[i].wallStarts.length; j++){
 
-			var indexCornerInMultipleRoomList = cornersManyRoomsList.indexOf(cornersManyRoomsList[i].wallStarts[j].getEnd());
+			  var indexCornerInMultipleRoomList = cornersManyRoomsList.indexOf(cornersManyRoomsList[i].wallStarts[j].getEnd());
 			  if (indexCornerInMultipleRoomList>-1){
 				var detachWall = cornersManyRoomsList[i].wallStarts[j];
 				var endCorner = cornersCloneList[indexCornerInMultipleRoomList];
 				floorplan.newWall(cornersCloneList[i], endCorner);
 			  }
-			  }
-			  }
+			}
+		   }
 
 		   //scope.activeRoom.updateRoom();
 		   detachRoom = false;
-		  }
+		 }
 			else
 			{
 			  var closestCorner = null;
@@ -46534,10 +46534,12 @@ var JQUERY = require('jquery');
 		this.y = corner.y;
 		// absorb the other corner's wallStarts and wallEnds
 		for( var i = corner.wallStarts.length - 1; i >= 0; i-- ) {
-		  corner.wallStarts[i].setStart( this );
+		  floorplan.newWall(this, corner.wallStarts[i].getEnd());
+		  corner.wallStarts[i].end.detachWall(corner.wallStarts[i]);
 		}
 		for( var i = corner.wallEnds.length - 1; i >= 0; i-- ) {
-		  corner.wallEnds[i].setEnd( this );
+		  floorplan.newWall(corner.wallEnds[i].getStart(), this);
+		  corner.wallStarts[i].end.detachWall(corner.wallStarts[i]);
 		}
 		// delete the other corner
 		corner.removeAll();
@@ -46548,11 +46550,13 @@ var JQUERY = require('jquery');
 	  this.mergeWithIntersected = function() {
 		//console.log('mergeWithIntersected for object: ' + this.type);
 		// check corners
+		var c = floorplan.getCorners();
 		for( var i = 0; i < floorplan.getCorners().length; i++ ) {
 		  obj = floorplan.getCorners()[i];
 		  if (this.distanceFromCorner(obj) < tolerance && obj != this) {
 			this.combineWithCorner(obj);
-			floorplan.removeCorner(i);
+			//floorplan.removeCorner(i);
+			var c1 = floorplan.getCorners();
 			return true;
 		  }
 		}
@@ -46572,6 +46576,7 @@ var JQUERY = require('jquery');
 			obj.setEnd(this);
 			obj.end = this;
 			floorplan.update();
+			var c1 = floorplan.getCorners().length
 			return true;
 		  }
 		}
