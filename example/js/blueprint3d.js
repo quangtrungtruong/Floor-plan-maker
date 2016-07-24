@@ -44651,6 +44651,8 @@ global.Blueprint3d = function(opts) {
 	  this.lastNode = null;
 
 	  this.modeResetCallbacks = $.Callbacks();
+	  this.itemSelectedCallbacks = $.Callbacks();
+	  this.itemUnselectedCallbacks = $.Callbacks();
 
 	  var canvasElement = $("#"+canvas);
 	  var canvasElementForWheel = document.getElementById(canvas);
@@ -44690,6 +44692,7 @@ global.Blueprint3d = function(opts) {
 		});
 
 		floorplan.roomLoadedCallbacks.add(scope.reset);
+
 	  }
 
 	  this.getMouseTransformed = function(mouseX, mouseY){
@@ -44766,6 +44769,14 @@ global.Blueprint3d = function(opts) {
 			floorplan.getCorners()[i].removeDuplicateWalls();
 
 		view.draw(scope.unit);
+	  }
+
+	  this.getFloorplan = function(){
+	    return floorplan;
+	  }
+
+	  this.callUpdateTarget = function(){
+	    updateTarget();
 	  }
 
 	  this.setRoomThickness = function(thickness){
@@ -45094,7 +45105,7 @@ global.Blueprint3d = function(opts) {
 		var hoverDoor = floorplan.overlappedDoor(mouseX, mouseY);
 		var hoverWindow = floorplan.overlappedWindow(mouseX, mouseY);
 		var hoverRoom = floorplan.overlappedRoom(mouseX, mouseY);
-		if (hoverWall && scope.mode==scope.modes.MOVE && mouseClick){
+		/*if (hoverWall && scope.mode==scope.modes.MOVE && mouseClick){
 		  var thicknessVal = prompt("You want to add corner or edit width. Blank is add new corner or number is to edit width: ","");
 		  if (thicknessVal!="")
 				hoverWall.thickness = thicknessVal;
@@ -45124,7 +45135,7 @@ global.Blueprint3d = function(opts) {
 					 hoverRoom.setRoomType(roomType);
 					 hoverRoom.labelPos = {x:mouseX, y:mouseY};
 				   }
-				 }
+				 }*/
 
 		// drawing
 		// consider: draw a linne and it cuts many other lines will create many intersection corners
@@ -45196,6 +45207,15 @@ global.Blueprint3d = function(opts) {
 		// merge corner
 		for (var i=0; floorplan.corners && (i<floorplan.corners.length); i++)
 		  floorplan.corners[i].mergeWithIntersected();
+		  if (hoverDoor)
+				scope.selectItem(hoverDoor, "door");
+				  else if (hoverWindow)
+					scope.selectItem(hoverWindow, "window");
+					else if (hoverWall)
+					  scope.selectItem(hoverWall, "wall");
+					  else if (hoverRoom)
+						scope.selectItem(hoverRoom, "room");
+						  else scope.selectItem(null, null);
 	  }
 
 	  function mouseleave() {
@@ -45213,6 +45233,14 @@ global.Blueprint3d = function(opts) {
 
 	  this.resizeView = function() {
 		view.handleWindowResize();
+	  }
+
+	  this.selectItem = function(item, type){
+	    if (item!=null)
+	      scope.itemSelectedCallbacks.fire(item, type, {x:mouseX, y:mouseY});
+	    else
+	      scope.itemUnselectedCallbacks.fire(item);
+	    updateTarget();
 	  }
 
 	  this.setMode = function(mode) {
@@ -46790,6 +46818,10 @@ var JQUERY = require('jquery');
 
 	  this.getStartX = function() {
 		return start[0];
+	  }
+
+	  this.getWidth = function(){
+	    return scope.width;
 	  }
 
 	  this.setWidth = function(val){
@@ -48588,6 +48620,10 @@ var JQUERY = require('jquery');
 
 	  this.getStartX = function() {
 		return start[0];
+	  }
+
+	  this.getWidth = function(){
+	    return scope.width;
 	  }
 
 	  this.setWidth = function(val){
