@@ -44941,6 +44941,7 @@ global.Blueprint3d = function(opts) {
 
 			lastX = rawMouseX;
 			lastY = rawMouseY;
+			scope.activeRoom = null;
 		  } else if (scope.activeRoom){
 
 			if (detachRoom==true){
@@ -45105,37 +45106,6 @@ global.Blueprint3d = function(opts) {
 		var hoverDoor = floorplan.overlappedDoor(mouseX, mouseY);
 		var hoverWindow = floorplan.overlappedWindow(mouseX, mouseY);
 		var hoverRoom = floorplan.overlappedRoom(mouseX, mouseY);
-		/*if (hoverWall && scope.mode==scope.modes.MOVE && mouseClick){
-		  var thicknessVal = prompt("You want to add corner or edit width. Blank is add new corner or number is to edit width: ","");
-		  if (thicknessVal!="")
-				hoverWall.thickness = thicknessVal;
-			else
-			floorplan.addCornerInWall(hoverWall, mouseX, mouseY);
-			updateTarget();
-		}
-		else if (hoverDoor && scope.mode==scope.modes.MOVE && mouseClick){
-				var widthVal = prompt("Enter width of door: ", hoverDoor.width);
-				if (widthVal!=null)
-					hoverDoor.setWidth(widthVal);
-					hoverDoor.arrangeDoor(floorplan.walls);
-					hoverDoor.mergeWithIntersected(floorplan.getWalls());
-					updateTarget();
-			 }
-			 else if (hoverWindow && scope.mode==scope.modes.MOVE && mouseClick){
-				var widthVal = prompt("Enter width of window: ", hoverWindow.width);
-				if (widthVal!=null)
-					hoverWindow.setWidth(widthVal);
-					hoverWindow.arrangeWindow(floorplan.walls);
-					hoverWindow.mergeWithIntersected(floorplan.getWalls());
-					updateTarget();
-			 }
-				 else if (hoverRoom && scope.mode==scope.modes.MOVE && mouseClick){
-				   var roomType = prompt("Enter room type: ", hoverRoom.getRoomType());
-				   if (roomType && roomType!=""){
-					 hoverRoom.setRoomType(roomType);
-					 hoverRoom.labelPos = {x:mouseX, y:mouseY};
-				   }
-				 }*/
 
 		// drawing
 		// consider: draw a linne and it cuts many other lines will create many intersection corners
@@ -45543,13 +45513,6 @@ global.Blueprint3d = function(opts) {
 	  }
 
 	  function drawRoom(room){
-		/*for (var i=0; i < room.corners.length; i++){
-		  for (var j=0; j < floorplan.walls.length; j++){
-			if ((floorplan.walls[j].start = room.corners[i]) && (floorplan.walls[j].end))
-			  floorplan.walls[j].setThickness(room.roomThickness[i]);
-		  }
-		}*/
-
 		drawPolygon(
 		  utils.map(room.corners, function(corner) {
 			return viewmodel.convertX(corner.x);
@@ -47000,6 +46963,44 @@ var JQUERY = require('jquery');
 	    wall.start.detachWall(wall);
 		wall.end.detachWall(wall);
 		removeWall(wall);
+	  }
+
+	  this.removeDoor = function(door){
+	    doors.splice(doors.indexOf(door), 1);
+	    scope.update();
+	  }
+
+	  this.removeWindow = function(window){
+	    var t = windows.indexOf(window);
+	    windows.splice(windows.indexOf(window), 1);
+	    scope.update();
+	  }
+
+	  this.removeRoom = function(room){
+        var corner1 = room.getCorners()[0];
+        var corner2 = corner1;
+         var flag = true;
+        for (var i=0; i<room.getCorners().length; i++){
+          for (var j=0; j<corner1.wallStarts.length; j++)
+            if (room.getCorners().indexOf(corner1.wallStarts[j].getEnd())>-1){
+              flag = true;
+              corner2 = corner1.wallStarts[j].getEnd();
+              for (var k=0; k<rooms.length; k++){
+                var id = rooms[k].getId();
+                var val1= rooms[k].getCorners().indexOf(corner2);
+                var val2= (rooms[k].getCorners().indexOf(corner1));
+                if ((rooms[k].getId()!=room.getId()) && ((((rooms[k].getCorners().indexOf(corner1))>-1) && (rooms[k].getCorners().indexOf(corner2)>-1)))){
+                  flag = false;
+                  break;
+                }
+              }
+              if (flag==true){
+			    corner1.wallStarts[j].remove();
+			  }
+			  corner1 = corner2;
+            }
+        }
+        scope.update();
 	  }
 
 	  this.newCorner = function(x, y, id) {
