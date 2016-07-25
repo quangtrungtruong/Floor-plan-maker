@@ -45097,8 +45097,8 @@ global.Blueprint3d = function(opts) {
 
 	  function mouseup() {
 		view.setContext(context);
-		mouseDown = false;
 		detachRoom = false;
+		mouseDown = false;
 		mouseMoved = false;
 
 		// edit the width of wall
@@ -45106,6 +45106,8 @@ global.Blueprint3d = function(opts) {
 		var hoverDoor = floorplan.overlappedDoor(mouseX, mouseY);
 		var hoverWindow = floorplan.overlappedWindow(mouseX, mouseY);
 		var hoverRoom = floorplan.overlappedRoom(mouseX, mouseY);
+		//if (hoverWall)
+		//   floorplan.addCornerInWall(hoverWall, mouseX, mouseY);
 
 		// drawing
 		// consider: draw a linne and it cuts many other lines will create many intersection corners
@@ -45177,7 +45179,8 @@ global.Blueprint3d = function(opts) {
 		// merge corner
 		for (var i=0; floorplan.corners && (i<floorplan.corners.length); i++)
 		  floorplan.corners[i].mergeWithIntersected();
-		  if (hoverDoor)
+		    if (!mouseMoved){
+		      if (hoverDoor)
 				scope.selectItem(hoverDoor, "door");
 				  else if (hoverWindow)
 					scope.selectItem(hoverWindow, "window");
@@ -45186,6 +45189,14 @@ global.Blueprint3d = function(opts) {
 					  else if (hoverRoom)
 						scope.selectItem(hoverRoom, "room");
 						  else scope.selectItem(null, null);
+			}
+	  }
+
+	  this.addCornerInWall = function(hoverWall, mouseX, mouseY){
+	    if (floorplan.getWalls().indexOf(hoverWall)>-1)
+	      floorplan.addCornerInWall(hoverWall, mouseX, mouseY);
+	      updateTarget();
+	      floorplan.update();
 	  }
 
 	  function mouseleave() {
@@ -47014,7 +47025,8 @@ var JQUERY = require('jquery');
                 for (var k=0; k<walls.length; k++){
                   if (((walls[k].getStart()==room.getCorners()[i]) && (walls[k].getEnd()==room.getCorners()[j])) ||
                   ((walls[k].getEnd()==room.getCorners()[i]) && (walls[k].getStart()==room.getCorners()[j])))
-                    walls[k].remove();
+                    //walls[k].remove();
+                    scope.removeWall(walls[k]);
                 }
               }
             }
@@ -47104,6 +47116,7 @@ var JQUERY = require('jquery');
 		start.detachWall(wall);
 		end.detachWall(wall);
 		removeWall(wall);
+		wall.remove();
 		wall1.thickness = thickness;
 		wall2.thickness = thickness;
 		walls.push(wall1);

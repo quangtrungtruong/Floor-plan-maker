@@ -463,10 +463,11 @@ var ContextMenu2D = function(blueprint3d) {
       $("#context-menu2D").show();
       $('#input-option3').click(function(){
         var checked = $(this).prop('checked');
-        scope.floorplan.addCornerInWall(selectedItem, mouse.x, mouse.y);
+        scope.floorplanner.addCornerInWall(selectedItem, mouse.x, mouse.y);
+        //selectedItem.remove();
+        //scope.floorplanner.callUpdateTarget();
         $("#context-menu2D").hide();
       });
-       scope.floorplanner.callUpdateTarget();
     }
     else if (objStr!=null){
       if (objStr == "room"){
@@ -623,8 +624,8 @@ var ViewerFloorplanner = function(blueprint3d) {
 
     $(draw_room).click(function(){
       scope.floorplanner.setMode(scope.floorplanner.modes.DRAW_ROOM);
-      var thicknessRoom = prompt("Enter thickness of room: ", 8);
-      scope.floorplanner.setRoomThickness(thicknessRoom);
+      //var thicknessRoom = prompt("Enter thickness of room: ", 8);
+      //scope.floorplanner.setRoomThickness(thicknessRoom);
     });
 
     $(draw_window).click(function(){

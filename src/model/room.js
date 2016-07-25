@@ -22,7 +22,7 @@ var JQUERY = require('jquery');
 	  this.corners = corners;
 	  this.walls = [];
 	  this.roomThickness = [];
-	  this.thickness;
+	  this.thickness = 8;
 	  this.roomType = "";
 
 	  this.interiorCorners = [];
