@@ -44627,7 +44627,7 @@ global.Blueprint3d = function(opts) {
 	  this.outsideY = 0;
 
 	  // how much will we move a corner to make a wall axis aligned (cm)
-	  var snapTolerance = 25;
+	  var snapTolerance = 15;
 
 	  // these are in threeJS coords
 	  var mouseX = 0;
@@ -46980,7 +46980,7 @@ var JQUERY = require('jquery');
         var corner1 = room.getCorners()[0];
         var corner2 = corner1;
          var flag = true;
-        for (var i=0; i<room.getCorners().length; i++){
+        /*for (var i=0; i<room.getCorners().length; i++){
           for (var j=0; j<corner1.wallStarts.length; j++)
             if (room.getCorners().indexOf(corner1.wallStarts[j].getEnd())>-1){
               flag = true;
@@ -46999,6 +46999,26 @@ var JQUERY = require('jquery');
 			  }
 			  corner1 = corner2;
             }
+        }*/
+
+        for (var i=0; i<room.getCorners().length; i++){
+          for (var j=i+1; j<room.getCorners().length; j++){
+            if (room.getCorners()[i].adjacentCorners().indexOf(room.getCorners()[j])>-1){
+              var flag = true;
+              for (var k=0; k<rooms.length; k++){
+                if ((rooms[k].getId()!=room.getId()) && (rooms[k].getCorners().indexOf(room.getCorners()[i])>-1)&& (rooms[k].getCorners().indexOf(room.getCorners()[j])>-1)){
+                  flag = false;
+                }
+              }
+              if (flag){
+                for (var k=0; k<walls.length; k++){
+                  if (((walls[k].getStart()==room.getCorners()[i]) && (walls[k].getEnd()==room.getCorners()[j])) ||
+                  ((walls[k].getEnd()==room.getCorners()[i]) && (walls[k].getStart()==room.getCorners()[j])))
+                    walls[k].remove();
+                }
+              }
+            }
+          }
         }
         scope.update();
 	  }
