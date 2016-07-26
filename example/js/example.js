@@ -688,6 +688,8 @@ var mainControls = function(blueprint3d) {
 
   function loadDesign() {
     files = $("#loadFile").get(0).files;
+    if (files==null)
+      files = $("#load-floorplan").get(0).files;
     var reader  = new FileReader();
     reader.onload = function(event) {
         var data = event.target.result;
@@ -701,7 +703,7 @@ var mainControls = function(blueprint3d) {
     var a = window.document.createElement('a');
     var blob = new Blob([data], {type : 'text'});
     a.href = window.URL.createObjectURL(blob);
-    a.download = 'design.blueprint3d';
+    a.download = 'floorplan2d';
     document.body.appendChild(a)
     a.click();
     document.body.removeChild(a)
@@ -711,6 +713,9 @@ var mainControls = function(blueprint3d) {
     $("#new").click(newDesign);
     $("#loadFile").change(loadDesign);
     $("#saveFile").click(saveDesign);
+
+    $("#save-floorplan").click(saveDesign);
+    $("#load-floorplan").change(loadDesign);
   }
 
   init();
