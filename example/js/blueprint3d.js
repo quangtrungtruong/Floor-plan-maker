@@ -44924,7 +44924,7 @@ global.Blueprint3d = function(opts) {
 			scope.activeWall.snapToAxis(snapTolerance*3);
 
 			for (var i=0; i<floorplan.getDoors().length; i++){
-			  if (floorplan.getDoors()[i].closestWall==scope.activeWall)
+			  if (floorplan.getDoors()[i].getClosestWallDoor()==scope.activeWall.id)
 				floorplan.getDoors()[i].relativeMove(
 				  (rawMouseX - lastX) * cmPerPixel,
 				  (rawMouseY - lastY) * cmPerPixel
@@ -44932,7 +44932,9 @@ global.Blueprint3d = function(opts) {
 			}
 
 			for (var i=0; i<floorplan.getWindows().length; i++){
-			  if (floorplan.getWindows()[i].closestWall==scope.activeWall)
+			  var id = floorplan.getWindows()[i].getClosestWallWindow();
+			  var lcors = floorplan.getWalls();
+			  if (floorplan.getWindows()[i].getClosestWallWindow()==scope.activeWall.id)
 				floorplan.getWindows()[i].relativeMove(
 				  (rawMouseX - lastX) * cmPerPixel,
 				  (rawMouseY - lastY) * cmPerPixel
@@ -45030,39 +45032,36 @@ global.Blueprint3d = function(opts) {
 			for (var i=0; i<floorplan.getDoors().length; i++){
 			  var id = scope.activeRoom.getId();
 			  var idr = floorplan.getDoors()[i].closestWall;
-			  if (floorplan.getRoomIdBaseWall(floorplan.getDoors()[i].closestWall)==scope.activeRoom.getId()){
-				floorplan.getDoors()[i].relativeMove(
+			  var closestWall = null;
+			  utils.forEach(floorplan.getWalls(), function(wall){
+			    if (wall.id == floorplan.getDoors()[i].getClosestWallDoor())
+			      closestWall = wall;
+			  });
+
+			  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
+				  floorplan.getDoors()[i].relativeMove(
 				  (translationX) * cmPerPixel,
 				  (translationY) * cmPerPixel
 				);
 			  }
 			}
 
-			for (var i=0; i<scope.activeRoom.walls.length; i++){
-			  for (var j=0; j<scope.activeRoom.walls[i].doors[j].length; j++)
-			    scope.activeRoom.walls[i].doors[j].relativeMove(
-				  (translationX) * cmPerPixel,
-				  (translationY) * cmPerPixel
-				);
-			}
 
 			for (var i=0; i<floorplan.getWindows().length; i++){
 			  var id = scope.activeRoom.getId();
 			  var idr = floorplan.getWindows()[i].closestWall;
-			  if (floorplan.getRoomIdBaseWall(floorplan.getWindows()[i].closestWall)==scope.activeRoom.getId()){
-				floorplan.getWindows()[i].relativeMove(
+			  var closestWall = null;
+			  utils.forEach(floorplan.getWalls(), function(wall){
+			    if (wall.id == floorplan.getWindows()[i].getClosestWallWindow())
+			      closestWall = wall;
+			  });
+
+			  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
+				  floorplan.getWindows()[i].relativeMove(
 				  (translationX) * cmPerPixel,
 				  (translationY) * cmPerPixel
 				);
 			  }
-			}
-
-			for (var i=0; i<scope.activeRoom.walls.length; i++){
-			  for (var j=0; j<scope.activeRoom.walls[i].Windows[j].length; j++)
-			    scope.activeRoom.walls[i].windows[j].relativeMove(
-				  (translationX) * cmPerPixel,
-				  (translationY) * cmPerPixel
-				);
 			}
 
 			scope.activeRoom.labelPos.x = scope.activeRoom.labelPos.x+(rawMouseX - lastX) * cmPerPixel;
@@ -46665,6 +46664,9 @@ var JQUERY = require('jquery');
 	  this.frontTexture = defaultTexture;
 	  this.backTexture = defaultTexture;
 
+	  this.setClosestWall = function(wall){
+	    closestWall = wall;
+	  }
 
 	  function getUuid() {
 		return id;
@@ -46714,7 +46716,7 @@ var JQUERY = require('jquery');
 
 	  this.arrangeDoor = function(walls){
 		var orientationId = this.getClosestWall(walls);
-		if (!orientationId)
+		if (orientationId==null)
 		  return;
 
 		var cor1 = utils.determineLineByVector(centerX, centerY, walls[orientationId].getStartX()-walls[orientationId].getEndX(),
@@ -46724,11 +46726,10 @@ var JQUERY = require('jquery');
 		start = [cor1.x, cor1.y];
 		end = [cor2.x, cor2.y];
 
-		closestWall = walls[this.getClosestWall(walls)];
+		closestWall = floorplan.getWalls()[this.getClosestWall(floorplan.getWalls())];
 	  }
 
 	  this.getClosestWallDoor = function(){
-	    closestWall = floorplan.getWalls()[this.getClosestWall(floorplan.getWalls())];
 	    return closestWall.id;
 	  }
 
@@ -46753,7 +46754,7 @@ var JQUERY = require('jquery');
 	  }
 
 	  this.mergeWithIntersected = function(walls) {
-		scope.closestWall = walls[this.getClosestWall(walls)];
+		scope.closestWall = floorplan.getWalls()[this.getClosestWall(walls)];
 		if (scope.closestWall && (this.distanceFromWall(scope.closestWall)<scope.tolerance)){
 		  var center = utils.pointOnLine(scope.closestWall.getStart(), scope.closestWall.getEnd(), {x:centerX, y:centerY});
 		  if (center)
@@ -46821,6 +46822,14 @@ var JQUERY = require('jquery');
 
 	  this.getEndY = function() {
 		return end[1];
+	  }
+
+	  this.setStart = function(valX, valY){
+        start = [valX, valY];
+	  }
+
+	   this.setEnd = function(valX, valY){
+        end = [valX, valY];
 	  }
 
 	  this.remove = function() {
@@ -46969,6 +46978,7 @@ var JQUERY = require('jquery');
 	    this.newWindow = function(x, y){
 		var window = new Window(this, x, y);
 		window.arrangeWindow(walls);
+		var id = window.getClosestWallWindow();
 		windows.push(window);
 		scope.update();
 		return window;
@@ -47234,6 +47244,10 @@ var JQUERY = require('jquery');
 		   'centerX':door.getCenterX(),
 		   'centerY':door.getCenterY(),
 		   'closestWall':door.getClosestWallDoor(),
+		   'startX' : door.getStartX(),
+		   'startY' : door.getStartY(),
+		   'endX' : door.getEndX(),
+		   'endY' : door.getEndY(),
 		   'width':door.getWidth(),
 		   'thickness':door.getThickness()
 		 }
@@ -47244,6 +47258,10 @@ var JQUERY = require('jquery');
 		   'centerX':window.getCenterX(),
 		   'centerY':window.getCenterY(),
 		   'closestWall':window.getClosestWallWindow(),
+		   'startX' : window.getStartX(),
+		   'startY' : window.getStartY(),
+		   'endX' : window.getEndX(),
+		   'endY' : window.getEndY(),
 		   'width':window.getWidth(),
 		   'thickness':window.getThickness()
 		 }
@@ -47256,14 +47274,42 @@ var JQUERY = require('jquery');
 	  this.loadFloorplan = function( floorplan ) {
 		this.reset();
 
-		var corners = {};
-		if (floorplan == null || !('corners' in floorplan) || !('walls' in floorplan)) {
+		rooms = [];
+		walls = [];
+		corners = [];
+		doors = [];
+		windows = [];
+
+		var corners_temp = [];
+		var walls_temp = [];
+		var rooms_temp = [];
+		if (floorplan == null || !('corners' in floorplan) || !('walls' in floorplan) || !('rooms' in floorplan)|| !('doors' in floorplan)|| !('windows' in floorplan)) {
 		  return
 		}
+		var count = 0;
 		for (var id in floorplan.corners) {
 		  var corner = floorplan.corners[id];
-		  corners[id] = this.newCorner(corner.x, corner.y, id);
+		  corners[count] = this.newCorner(corner.x, corner.y, id);
+		  corners_temp[id] = corners[count];
+		  count++;
 		}
+
+        count = 0;
+		for (var id in floorplan.walls) {
+		  var wall = floorplan.walls[id];
+		  walls[count] = this.newWall(corners_temp[wall.corner1], corners_temp[wall.corner2]);
+
+		  if (wall.frontTexture) {
+			walls[count].frontTexture = wall.frontTexture;
+		  }
+		  if (wall.backTexture) {
+			walls[count].backTexture = wall.backTexture;
+		  }
+		  walls[count].id = id;
+		  walls_temp[id] = walls[count];
+		  count++;
+		}
+
 		utils.forEach(floorplan.walls, function(wall) {
 		  var newWall = scope.newWall(
 			corners[wall.corner1], corners[wall.corner2]);
@@ -47274,6 +47320,54 @@ var JQUERY = require('jquery');
 			newWall.backTexture = wall.backTexture;
 		  }
 		});
+
+		var roomCorners = findRooms(corners);
+		utils.forEach(roomCorners, function(corners) {
+		  rooms.push(new Room(scope, corners));
+		});
+
+		utils.forEach(floorplan.rooms, function(room) {
+		  var cornerIdList = room.corners;
+		  var cornerList = [];
+		  utils.forEach(cornerIdList, function(id){
+		    cornerList.push(corners_temp[id]);
+		  });
+		  var room_temp = new Room(scope, cornerList);
+		  utils.forEach(rooms, function(rm){
+		    if (rm.checkIsOne(room_temp)==true){
+		      rm.setRoomType(room.roomtype);
+		      rm.labelPos = {x:room.x, y:room.y};
+		    }
+		  });
+		});
+
+		count = 0;
+		for (var id in floorplan.doors) {
+		  var door = floorplan.doors[id];
+		  doors[count] = this.newDoor(door.centerX, door.centerY);
+		  doors[count].id = id;
+		  doors[count].width = door.width;
+		  doors[count].thickness = door.thickness;
+		  doors[count].setClosestWall(walls_temp[door.closestWall]);
+		  //doors[count].arrangeDoor(walls);
+		  doors[count].setStart(door.startX, door.startY);
+		  doors[count].setEnd(door.endX, door.endY);
+		  count++;
+		}
+
+		count = 0;
+		for (var id in floorplan.windows) {
+		  var window = floorplan.windows[id];
+		  windows[count] = this.newWindow(window.centerX, window.centerY);
+		  windows[count].id = id;
+		  windows[count].width = window.width;
+		  windows[count].thickness = window.thickness;
+		  windows[count].setClosestWall(walls_temp[window.closestWall]);
+		  //windows[count].arrangeWindow(walls);
+		  windows[count].setStart(window.startX, window.startY);
+		  windows[count].setEnd(window.endX, window.endY);
+		  count++;
+		}
 
 		if ('newFloorTextures' in floorplan) {
 		  this.floorTextures = floorplan.newFloorTextures;
@@ -47874,7 +47968,7 @@ var JQUERY = require('jquery');
 	  this.roomSavedCallbacks = JQUERY.Callbacks(); // success (bool), copy (bool)
 	  this.roomDeletedCallbacks = JQUERY.Callbacks();
 
-	  this.loadSerialized = function(data_json) {
+		  this.loadSerialized = function(data_json) {
 		// TODO: better documentation on serialization format.
 		// TODO: a much better serialization format.
 		this.roomLoadingCallbacks.fire();
@@ -48584,6 +48678,10 @@ var JQUERY = require('jquery');
 		return id;
 	  }
 
+	  this.setClosestWall = function(wall){
+	    closestWall = wall;
+	  }
+
 	  this.resetFrontBack = function(func) {
 		this.frontEdge = null;
 		this.backEdge = null;
@@ -48628,7 +48726,7 @@ var JQUERY = require('jquery');
 
 	  this.arrangeWindow = function(walls){
 		var orientationId = this.getClosestWall(walls);
-		if (!orientationId)
+		if (orientationId==null)
 		  return;
 
 		var cor1 = utils.determineLineByVector(centerX, centerY, walls[orientationId].getStartX()-walls[orientationId].getEndX(),
@@ -48638,11 +48736,10 @@ var JQUERY = require('jquery');
 		start = [cor1.x, cor1.y];
 		end = [cor2.x, cor2.y];
 
-		closestWall = walls[this.getClosestWall(walls)];
+		closestWall = floorplan.getWalls()[this.getClosestWall(walls)];
 	  }
 
 	  this.getClosestWallWindow = function(){
-	    closestWall = floorplan.getWalls()[this.getClosestWall(floorplan.getWalls())];
 	    return closestWall.id;
 	  }
 
@@ -48667,7 +48764,7 @@ var JQUERY = require('jquery');
 	  }
 
 	  this.mergeWithIntersected = function(walls) {
-		scope.closestWall = walls[this.getClosestWall(walls)];
+		scope.closestWall = floorplan.getWalls()[this.getClosestWall(floorplan.getWalls())];
 		if ((scope.closestWall) && (this.distanceFromWall(scope.closestWall)<scope.tolerance)){
 		  var center = utils.pointOnLine(scope.closestWall.getStart(), scope.closestWall.getEnd(), {x:centerX, y:centerY});
 		  if (center)
@@ -48735,6 +48832,14 @@ var JQUERY = require('jquery');
 
 	  this.getEndY = function() {
 		return end[1];
+	  }
+
+	   this.setStart = function(valX, valY){
+        start = [valX, valY];
+	  }
+
+	   this.setEnd = function(valX, valY){
+        end = [valX, valY];
 	  }
 
 	  this.remove = function() {

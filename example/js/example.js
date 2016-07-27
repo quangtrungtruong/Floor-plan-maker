@@ -688,7 +688,7 @@ var mainControls = function(blueprint3d) {
 
   function loadDesign() {
     files = $("#loadFile").get(0).files;
-    if (files==null)
+    if (files.length==0)
       files = $("#load-floorplan").get(0).files;
     var reader  = new FileReader();
     reader.onload = function(event) {
