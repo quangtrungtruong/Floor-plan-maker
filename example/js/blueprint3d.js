@@ -44672,6 +44672,8 @@ global.Blueprint3d = function(opts) {
 	  var lastYY = 0;
 	  var scale = 1.0;
 	  var toleranceRoom = 10;
+	  // it permits room detached from the others
+	  var movingRoom = null;
 
 	  // var for zoom in and zoom out
 	  this.scaleFactor = 1.1;
@@ -44781,6 +44783,10 @@ global.Blueprint3d = function(opts) {
 
 	  this.setRoomThickness = function(thickness){
 		floorplan.setRoomThickness(thickness);
+	  }
+
+	  this.permitMovingRoom = function(room){
+	    movingRoom = room;
 	  }
 
 	  function mousedown() {
@@ -45016,59 +45022,62 @@ global.Blueprint3d = function(opts) {
 			    }
 			  }
 
-		  var translationX = rawMouseX - lastX;
-		  var translationY = rawMouseY - lastY;
+			  var translationX = rawMouseX - lastX;
+			  var translationY = rawMouseY - lastY;
 
-		  if (closestCorner){
-		    translationX = (closestCorner.x - corner.x)/2;
-		    translationY = (closestCorner.y - corner.y)/2;
-		  }
-
-			scope.activeRoom.relativeMove(
-			translationX * cmPerPixel,
-			translationY * cmPerPixel
-			);
-
-			for (var i=0; i<floorplan.getDoors().length; i++){
-			  var id = scope.activeRoom.getId();
-			  var idr = floorplan.getDoors()[i].closestWall;
-			  var closestWall = null;
-			  utils.forEach(floorplan.getWalls(), function(wall){
-			    if (wall.id == floorplan.getDoors()[i].getClosestWallDoor())
-			      closestWall = wall;
-			  });
-
-			  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
-				  floorplan.getDoors()[i].relativeMove(
-				  (translationX) * cmPerPixel,
-				  (translationY) * cmPerPixel
-				);
+			  if (closestCorner && ((movingRoom==null) || ((movingRoom!=null) && (scope.activeRoom.id!=movingRoom.id)))){
+				translationX = (closestCorner.x - corner.x)/2;
+				translationY = (closestCorner.y - corner.y)/2;
 			  }
-			}
 
+			  if (movingRoom && scope.activeRoom.id==movingRoom.id && (closestCorner==null))
+			    movingRoom = null;
 
-			for (var i=0; i<floorplan.getWindows().length; i++){
-			  var id = scope.activeRoom.getId();
-			  var idr = floorplan.getWindows()[i].closestWall;
-			  var closestWall = null;
-			  utils.forEach(floorplan.getWalls(), function(wall){
-			    if (wall.id == floorplan.getWindows()[i].getClosestWallWindow())
-			      closestWall = wall;
-			  });
-
-			  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
-				  floorplan.getWindows()[i].relativeMove(
-				  (translationX) * cmPerPixel,
-				  (translationY) * cmPerPixel
+				scope.activeRoom.relativeMove(
+				translationX * cmPerPixel,
+				translationY * cmPerPixel
 				);
-			  }
-			}
 
-			scope.activeRoom.labelPos.x = scope.activeRoom.labelPos.x+(rawMouseX - lastX) * cmPerPixel;
-			scope.activeRoom.labelPos.y = scope.activeRoom.labelPos.y+(rawMouseY - lastY) * cmPerPixel;
+				for (var i=0; i<floorplan.getDoors().length; i++){
+				  var id = scope.activeRoom.getId();
+				  var idr = floorplan.getDoors()[i].closestWall;
+				  var closestWall = null;
+				  utils.forEach(floorplan.getWalls(), function(wall){
+					if (wall.id == floorplan.getDoors()[i].getClosestWallDoor())
+					  closestWall = wall;
+				  });
 
-			lastX = rawMouseX;
-			lastY = rawMouseY;
+				  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
+					  floorplan.getDoors()[i].relativeMove(
+					  (translationX) * cmPerPixel,
+					  (translationY) * cmPerPixel
+					);
+				  }
+				}
+
+
+				for (var i=0; i<floorplan.getWindows().length; i++){
+				  var id = scope.activeRoom.getId();
+				  var idr = floorplan.getWindows()[i].closestWall;
+				  var closestWall = null;
+				  utils.forEach(floorplan.getWalls(), function(wall){
+					if (wall.id == floorplan.getWindows()[i].getClosestWallWindow())
+					  closestWall = wall;
+				  });
+
+				  if (closestWall && (floorplan.getRoomIdBaseWall(closestWall)==scope.activeRoom.getId())){
+					  floorplan.getWindows()[i].relativeMove(
+					  (translationX) * cmPerPixel,
+					  (translationY) * cmPerPixel
+					);
+				  }
+				}
+
+				scope.activeRoom.labelPos.x = scope.activeRoom.labelPos.x+(rawMouseX - lastX) * cmPerPixel;
+				scope.activeRoom.labelPos.y = scope.activeRoom.labelPos.y+(rawMouseY - lastY) * cmPerPixel;
+
+				lastX = rawMouseX;
+				lastY = rawMouseY;
 			}
 			 } else if (scope.activeDoor){
 				  scope.activeDoor.relativeMove(
@@ -48118,20 +48127,28 @@ var JQUERY = require('jquery');
 	  this.getCornersInManyRooms = function(){
 	    var cornerList = [];
 	    updateWalls();
-	    for (var i=0; i<scope.corners.length; i++){
-	      //if ((corners[i].wallStarts.length>1) || (corners[i].wallEnds.length>1))
-	      if (corners[i].adjacentCorners().length>2)
-	        cornerList.push(corners[i]);
-	    }
+	    utils.forEach(scope.corners, function(corner){
+	      for (var i=0; i<floorplan.getRooms().length; i++){
+	        if ((floorplan.getRooms()[i].id!=scope.id) && (floorplan.getRooms()[i].getCorners().indexOf(corner))>-1){
+	          cornerList.push(corner);
+	        }
+	      }
+	    });
 	    return cornerList;
 	  }
 
 	  this.getCornersInOnlyARoom = function(){
 	    var cornerList = [];
-	    for (var i=0; i<scope.corners.length; i++){
-	      if ((corners[i].wallStarts.length==1) && (corners[i].wallEnds.length==1))
-	        cornerList.push(corners[i]);
-	    }
+	    utils.forEach(scope.corners, function(corner){
+	      var flag = true;
+	      for (var i=0; i<floorplan.getRooms().length; i++){
+	        if ((floorplan.getRooms()[i].id!=scope.id) && (floorplan.getRooms()[i].getCorners().indexOf(corner))>-1){
+	          flag = false;
+	        }
+	      }
+	      if (flag==true)
+	        cornerList.push(corner);
+	    });
 	    return cornerList;
 	  }
 

@@ -470,13 +470,24 @@ var ContextMenu2D = function(blueprint3d) {
       });
     }
     else if (objStr!=null){
+      $("#context-menu2D").show();
       if (objStr == "room"){
         $("#context-menu-name2D").text("Room");
         $('#label-option1').text("Room Type");
         $("#input-option1").prop("type", "text");
         $("#input-option1").val(selectedItem.getRoomType());
+        $('#label-option3').show();
+        $('#input-option3').show();
+        $('#label-option3').text("Move Room");
+        $('#input-option3').prop('checked', false);
+        $('#input-option3').click(function(){
+        var checked = $(this).prop('checked');
+        scope.floorplanner.permitMovingRoom(selectedItem);
+        $("#context-menu2D").hide();
+      });
       }
-      else if (objStr == "door"){
+      else {
+          if (objStr == "door"){
             $("#context-menu-name2D").text("Door");
             $('#label-option1').show();
             $('#label-option1').text("Length");
@@ -488,11 +499,11 @@ var ContextMenu2D = function(blueprint3d) {
               $('#label-option1').text("Length");
               $("#input-option1").val(selectedItem.getWidth());
             }
+            $('#label-option2').hide();
+            $('#input-option2').hide();
+      }
       $('#label-option2').hide();
       $('#input-option2').hide();
-      $('#label-option3').hide();
-      $('#input-option3').hide();
-      $("#context-menu2D").show();
     }
   }
 
@@ -703,7 +714,7 @@ var mainControls = function(blueprint3d) {
     var a = window.document.createElement('a');
     var blob = new Blob([data], {type : 'text'});
     a.href = window.URL.createObjectURL(blob);
-    a.download = 'floorplan2d';
+    a.download = 'floorplan2d.json';
     document.body.appendChild(a)
     a.click();
     document.body.removeChild(a)
