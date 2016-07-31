@@ -714,7 +714,18 @@ var mainControls = function(blueprint3d) {
     var a = window.document.createElement('a');
     var blob = new Blob([data], {type : 'text'});
     a.href = window.URL.createObjectURL(blob);
-    a.download = 'floorplan2d.json';
+    a.download = 'floorplan2d';
+    document.body.appendChild(a)
+    a.click();
+    document.body.removeChild(a)
+  }
+
+  function saveDesignObj(){
+    var data = blueprint3d.three.getFloorplan().exportObjects();
+    var a = window.document.createElement('a');
+    var blob = new Blob([data], {type : 'text'});
+    a.href = window.URL.createObjectURL(blob);
+    a.download = 'floorplan3d.obj';
     document.body.appendChild(a)
     a.click();
     document.body.removeChild(a)
@@ -723,7 +734,7 @@ var mainControls = function(blueprint3d) {
   function init() {
     $("#new").click(newDesign);
     $("#loadFile").change(loadDesign);
-    $("#saveFile").click(saveDesign);
+    $("#saveFile").click(saveDesignObj);
 
     $("#save-floorplan").click(saveDesign);
     $("#load-floorplan").change(loadDesign);

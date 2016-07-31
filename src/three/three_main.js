@@ -154,6 +154,10 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     return camera;
   }
 
+  this.getFloorplan = function(){
+    return floorplan;
+  }
+
   this.needsUpdate = function() {
     needsUpdate = true;
 
