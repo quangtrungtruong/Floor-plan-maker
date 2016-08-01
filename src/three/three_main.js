@@ -130,6 +130,8 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     return dataUrl;
   }
 
+
+
   this.stopSpin = function() {
     hasClicked = true;
   }

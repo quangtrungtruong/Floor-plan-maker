@@ -721,7 +721,7 @@ var mainControls = function(blueprint3d) {
   }
 
   function saveDesignObj(){
-    var data = blueprint3d.three.getFloorplan().exportObjects();
+    var data = blueprint3d.three.exportObj();
     var a = window.document.createElement('a');
     var blob = new Blob([data], {type : 'text'});
     a.href = window.URL.createObjectURL(blob);
