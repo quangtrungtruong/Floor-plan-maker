@@ -47016,6 +47016,8 @@ var JQUERY = require('jquery');
 	  }
 
 	  this.getClosestWallDoor = function(){
+	    if (closestWall==undefined)
+	      scope.arrangeDoor(floorplan.getWalls());
 	    return closestWall.id;
 	  }
 
@@ -49034,6 +49036,8 @@ var JQUERY = require('jquery');
 	  }
 
 	  this.getClosestWallWindow = function(){
+	    if (closestWall==undefined)
+	      scope.arrangeWindow(floorplan.getWalls());
 	    return closestWall.id;
 	  }
 

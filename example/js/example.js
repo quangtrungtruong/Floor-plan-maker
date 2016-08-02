@@ -501,9 +501,9 @@ var ContextMenu2D = function(blueprint3d) {
             }
             $('#label-option2').hide();
             $('#input-option2').hide();
+            $('#label-option3').hide();
+            $('#input-option3').hide();
       }
-      $('#label-option2').hide();
-      $('#input-option2').hide();
     }
   }
 
