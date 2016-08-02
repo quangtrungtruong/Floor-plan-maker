@@ -27524,6 +27524,10 @@ THREE.WebGLRenderer = function ( parameters ) {
 	var sprites = [];
 	var lensFlares = [];
 
+	var indexVertex = 0;
+	var indexVertexUvs = 0;
+	var indexNormals = 0;
+
 	// public properties
 
 	this.domElement = _canvas;
@@ -31169,6 +31173,10 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
+		indexVertex = 0;
+		indexVertexUvs = 0;
+		indexNormals = 0;
+
 		var result = objExporter(opaqueObjects);
 		result += objExporter(transparentObjects);
 		return result;
@@ -31194,10 +31202,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 	function objExporter(objectExporter) {
 
 		var output = '';
-
-		var indexVertex = 0;
-		var indexVertexUvs = 0;
-		var indexNormals = 0;
 
 		var vertex = new THREE.Vector3();
 		var normal = new THREE.Vector3();
@@ -31319,75 +31323,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 					output += ( indexVertex + face.c + 1 ) + '/' + ( hasVertexUvs ? ( indexVertexUvs + j + 2 ) : '' ) + '/' + ( indexNormals + j + 2 ) + '\n';
 
 				}
-
-
-				/*// normals
-
-				// name of the mesh object
-				output += 'o ' + mesh.name + '\n';
-
-				// vertices
-
-				if( vertices !== undefined ) {
-
-					for ( i = 0, l = vertices.length; i < l; i ++, nbVertex++ ) {
-
-						vertex.x = vertices[i].x;
-						vertex.y = vertices[i].y;
-						vertex.z = vertices[i].z;
-
-						// transfrom the vertex to world space
-						vertex.applyMatrix4( mesh.matrixWorld );
-
-						// transform the vertex to export format
-						output += 'v ' + vertex.x + ' ' + vertex.y + ' ' + vertex.z + '\n';
-
-					}
-				}
-
-				var normalX = [], normalY=[], normalZ=[];
-				for (var i=0; i<faces.length; i++){
-				  if ((normalX[faces[i].a]==undefined) && (faces[i].vertexNormals[0]!=undefined)){
-				    normalX[faces[i].a] = faces[i].vertexNormals[0].x;
-				    normalY[faces[i].a] = faces[i].vertexNormals[0].y;
-				    normalZ[faces[i].a] = faces[i].vertexNormals[0].z;
-				  }
-				  if ((normalX[faces[i].b]==0 && (faces[i].vertexNormals[1]!=undefined))){
-				    normalX[faces[i].b] = faces[i].vertexNormals[1].x;
-				    normalY[faces[i].b] = faces[i].vertexNormals[1].y;
-				    normalZ[faces[i].b] = faces[i].vertexNormals[1].z;
-				  }
-				  if ((normalX[faces[i].c]==undefined) && (faces[i].vertexNormals[2]!=undefined)){
-				    normalX[faces[i].c] = faces[i].vertexNormals[2].x;
-				    normalY[faces[i].c] = faces[i].vertexNormals[2].y;
-				    normalZ[faces[i].c] = faces[i].vertexNormals[2].z;
-				  }
-				}
-
-				normalMatrixWorld.getNormalMatrix( mesh.matrixWorld );
-
-				for ( i = 0, l = normalX.length; i < l; i ++, nbNormals++ ) {
-					if (normalX[i]!=undefined){
-						normal.x = normalX[i];
-						normal.y = normalY[i];
-						normal.z = normalZ[i];
-						// transfrom the normal to world space
-						normal.applyMatrix3( normalMatrixWorld );
-
-						// transform the normal to export format
-						output += 'vn ' + normal.x + ' ' + normal.y + ' ' + normal.z + '\n';
-					}
-				}
-
-
-				// faces
-
-				if( faces !== null ) {
-
-					for ( i = 0, l = faces.length; i < l; i += 3 ) {
-						output += 'f ' + faces[i].a + '//' + faces[i].a + ' ' + faces[i].b + '//' + faces[i].b + ' ' + faces[i].c + '//' + faces[i].c + "\n";
-					}
-				}*/
 
 			} else {
 				console.warn( 'THREE.OBJExporter.parseMesh(): geometry type unsupported', geometry );
