@@ -31169,8 +31169,9 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
-		objExporter(opaqueObjects);
-		objExporter(transparentObjects);
+		var result = objExporter(opaqueObjects);
+		result += objExporter(transparentObjects);
+		return result;
 
 		/*if ( scene.overrideMaterial ) {
 			objExporter(opaqueObjects.buffer);
@@ -31380,19 +31381,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		};
 
-		for ( var i = objectExporter.length - 1; i !== - 1; i -- ) {
+		for ( var k = 0; k < objectExporter.length; k++ ) {
 
-				if ( objectExporter[i].object instanceof THREE.Mesh ) {
+				if ( objectExporter[k]!=undefined && objectExporter[k].object instanceof THREE.Mesh ) {
 
-					parseMesh( objectExporter[i].object );
-
-				}
-
-				if ( objectExporter[i].object instanceof THREE.Line ) {
-
-					parseLine( objectExporter[i].object );
+					parseMesh( objectExporter[k].object );
 
 				}
+
+				/*if ( objectExporter[k]!=undefined && objectExporter[k].object instanceof THREE.Line ) {
+
+					parseLine( objectExporter[k].object );
+
+				}*/
 
 		}
 
@@ -50971,7 +50972,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
 
   this.exportObj = function(){
-    renderer.export(scene.getScene());
+    return renderer.export(scene.getScene());
   }
 
   this.options = function() {
