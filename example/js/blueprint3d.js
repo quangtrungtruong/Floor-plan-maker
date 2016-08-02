@@ -31178,7 +31178,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 		indexNormals = 0;
 
 		var result = objExporter(opaqueObjects);
-		result += objExporter(transparentObjects);
+		//result += objExporter(transparentObjects);
 		return result;
 
 		/*if ( scene.overrideMaterial ) {
