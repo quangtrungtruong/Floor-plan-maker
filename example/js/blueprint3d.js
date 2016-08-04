@@ -31128,13 +31128,75 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	};
 
+	function projectObjectForExport( scene, object ) {
+
+		if ( object.visible === false ) return;
+
+		if ( object instanceof THREE.Scene || object instanceof THREE.Group ) {
+
+			// skip
+
+		} else {
+
+			initObject( object, scene );
+
+			if (( object instanceof THREE.Light ) || ( object instanceof THREE.Sprite ) || ( object instanceof THREE.LensFlare )){}
+			else{
+
+				var webglObjects = _webglObjects[ object.id ];
+
+				if ( webglObjects && ( object.frustumCulled === false || _frustum.intersectsObject( object ) === true ) ) {
+
+					updateObject( object, scene );
+
+					for ( var i = 0, l = webglObjects.length; i < l; i ++ ) {
+
+						var webglObject = webglObjects[i];
+
+						unrollBufferMaterial( webglObject );
+
+						webglObject.render = true;
+
+						if ( _this.sortObjects === true ) {
+
+							if ( object.renderDepth !== null ) {
+
+								webglObject.z = object.renderDepth;
+
+							} else {
+
+								_vector3.setFromMatrixPosition( object.matrixWorld );
+								_vector3.applyProjection( _projScreenMatrix );
+
+								webglObject.z = _vector3.z;
+
+							}
+
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+
+		for ( var i = 0, l = object.children.length; i < l; i ++ ) {
+
+			projectObjectForExport( scene, object.children[ i ] );
+
+		}
+
+	}
+
 	this.export = function ( scene) {
 
 		var fog = scene.fog;
 
 		// update Skeleton objects
 
-		scene.traverse( function ( object ) {
+		/*scene.traverse( function ( object ) {
 
 			if ( object instanceof THREE.SkinnedMesh ) {
 
@@ -31142,35 +31204,15 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			}
 
-		} );
+		} );*/
 
 
 		opaqueObjects.length = 0;
-		transparentObjects.length = 0;
 
-		projectObject( scene, scene );
+		projectObjectForExport( scene, scene );
 
 		if ( _this.sortObjects === true ) {
-
 			opaqueObjects.sort( painterSortStable );
-			transparentObjects.sort( reversePainterSortStable );
-
-		}
-		// set matrices for immediate objects
-
-		for ( var i = 0, il = _webglObjectsImmediate.length; i < il; i ++ ) {
-
-			var webglObject = _webglObjectsImmediate[ i ];
-			var object = webglObject.object;
-
-			if ( object.visible ) {
-
-				setupMatrices( object, camera );
-
-				unrollImmediateBufferMaterial( webglObject );
-
-			}
-
 		}
 
 		indexVertex = 0;
@@ -31178,24 +31220,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 		indexNormals = 0;
 
 		var result = objExporter(opaqueObjects);
-		//result += objExporter(transparentObjects);
 		return result;
-
-		/*if ( scene.overrideMaterial ) {
-			objExporter(opaqueObjects.buffer);
-			objExporter(transparentObjects.buffer);
-			//renderObjectsImmediate( _webglObjectsImmediate, '', camera, lights, fog, false, material );
-
-		} else {
-
-			objExporter(opaqueObjects.buffer);
-			objExporter(transparentObjects.buffer);
-
-
-			//renderObjectsImmediate( _webglObjectsImmediate, 'opaque', camera, lights, fog, false, material );
-			//renderObjectsImmediate( _webglObjectsImmediate, 'transparent', camera, lights, fog, true, material );
-
-		}*/
 	};
 
     // output obj file
@@ -45827,7 +45852,7 @@ global.Blueprint3d = function(opts) {
 		context.lineTo(viewmodel.convertX(door.getCenterX()), viewmodel.convertY(door.getCenterY())-door.width/2);
 		context.stroke();*/
 
-	/*var angle = utils.angle2pi(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), viewmodel.convertX(door.getEndX()), viewmodel.convertY(door.getEndY()));
+	var angle = utils.angle2pi(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), viewmodel.convertX(door.getEndX()), viewmodel.convertY(door.getEndY()));
 		var real = angle*Math.PI;
 		var ss1 = real * 180;
 		var pi = Math.PI;
@@ -45836,7 +45861,7 @@ global.Blueprint3d = function(opts) {
 		context.arc(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), door.width/2, angle + 1.5 * Math.PI, angle);
 		//context.moveTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()));
 		//context.lineTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getCenterY())-door.width/2);
-		context.stroke();*/
+		context.stroke();
 	  }
 
 	  function drawCorner(corner) {
@@ -47320,7 +47345,7 @@ var JQUERY = require('jquery');
 	    rooms = [];
 	    doors = [];
 	    windows = [];
-	    update();
+	    this.update();
 	  }
 
 	  this.getRoomIdBaseWall = function(wall){
@@ -48197,6 +48222,7 @@ var JQUERY = require('jquery');
 
 	  this.floorplan = new Floorplan();
 	  this.scene = new Scene(scope, textureDir);
+	  this.sceneObj = new Scene(scope, textureDir);
 
 	  this.roomLoadingCallbacks = JQUERY.Callbacks();
 	  this.roomLoadedCallbacks = JQUERY.Callbacks(); // name
@@ -48247,6 +48273,7 @@ var JQUERY = require('jquery');
 
 	  this.newRoom = function(floorplan, items) {
 		this.scene.clearItems();
+		this.sceneObj.clearItems();
 		this.floorplan.loadFloorplan(floorplan);
 		utils.forEach(items, function(item) {
 		  position = new THREE.Vector3(
@@ -48263,6 +48290,15 @@ var JQUERY = require('jquery');
 			z: item.scale_z
 		  }
 		  scope.scene.addItem(
+			item.item_type,
+			item.model_url,
+			metadata,
+			position,
+			item.rotation,
+			scale,
+			item.fixed);
+
+		scope.sceneObj.addItem(
 			item.item_type,
 			item.model_url,
 			metadata,
@@ -50817,13 +50853,16 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
 
   var scene = model.scene;
+  var sceneObj = model.sceneObj;
 
   var model = model;
   this.element = JQUERY(element);
   var domElement;
 
   var camera;
+  var cameraObj;
   var renderer;
+  var rendererObj;
   this.controls;
   var canvas;
   var controller;
@@ -50857,6 +50896,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
     domElement = scope.element.get(0) // Container
     camera = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+    cameraObj = new THREE.PerspectiveCamera(45, 1, 1, 10000);
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       preserveDrawingBuffer: true // required to support .toDataURL()
@@ -50865,32 +50905,39 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
     renderer.shadowMapType = THREE.PCFSoftShadowMap;
-
-    var skybox = new ThreeSkybox(scene);
+    rendererObj = renderer;
 
     scope.controls = new ThreeControls(camera, domElement);
+    scope.controlsObj = new ThreeControls(cameraObj, domElement);
 
     hud = new ThreeHUD(scope);
 
-    controller = new ThreeController(
-      scope, model, camera, scope.element, scope.controls, hud);
+    // setup camera nicely
+    scope.centerCamera();
+    scope.centerCameraObj();
 
+    var lights = new ThreeLights(scene, model.floorplan);
+    lights = new ThreeLights(sceneObj, model.floorplan);
+
+    floorplan = new ThreeFloorplan(sceneObj,
+      model.floorplan, scope.controlsObj);
+
+    floorplan = new ThreeFloorplan(scene,
+      model.floorplan, scope.controls);
+
+    var skybox = new ThreeSkybox(scene);
+    model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
+
+	controller = new ThreeController(
+      scope, model, camera, scope.element, scope.controls, hud);
     domElement.appendChild(renderer.domElement);
+    domElement.appendChild(rendererObj.domElement);
 
     // handle window resizing
     scope.updateWindowSize();
     if (options.resize) {
       JQUERY(window).resize(scope.updateWindowSize);
     }
-
-    // setup camera nicely
-    scope.centerCamera();
-    model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
-
-    var lights = new ThreeLights(scene, model.floorplan);
-
-    floorplan = new ThreeFloorplan(scene,
-      model.floorplan, scope.controls);
 
     animate();
 
@@ -50923,7 +50970,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
 
   this.exportObj = function(){
-    return renderer.export(scene.getScene());
+    return renderer.export(sceneObj.getScene());
   }
 
   this.options = function() {
@@ -50971,9 +51018,20 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     spin();
     if (shouldRender()) {
       renderer.clear();
-      renderer.render(scene.getScene(), camera);
+      renderer.render(sceneObj.getScene(), camera);
       renderer.clearDepth();
       renderer.render(hud.getScene(), camera);
+    }
+    lastRender = Date.now();
+  };
+
+  function renderObj() {
+    spin();
+    if (shouldRender()) {
+      rendererObj.clear();
+      rendererObj.render(sceneObj.getScene(), cameraObj);
+      rendererObj.clearDepth();
+      rendererObj.render(hud.getScene(), cameraObj);
     }
     lastRender = Date.now();
   };
@@ -51024,14 +51082,32 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
     scope.controls.target = pan;
 
-    var distance = model.floorplan.getSize().z * 1.5;
+    var distance = model.floorplan.getSize().z * 2;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(0, distance, distance));
+      new THREE.Vector3(0, distance, 0));
     //scope.controls.setOffset(offset);
     camera.position.copy(offset);
 
     scope.controls.update();
+  }
+
+  this.centerCameraObj = function() {
+        var yOffset = 150.0;
+
+    var pan = model.floorplan.getCenter();
+    pan.y = yOffset;
+
+    scope.controlsObj.target = pan;
+
+    var distance = model.floorplan.getSize().z * 2;
+
+    var offset = pan.clone().add(
+      new THREE.Vector3(0, distance, 0));
+    //scope.controls.setOffset(offset);
+    cameraObj.position.copy(offset);
+
+    scope.controlsObj.update();
   }
 
   // projects the object's center point into x,y screen coords

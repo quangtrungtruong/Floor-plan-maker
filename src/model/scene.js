@@ -61,7 +61,7 @@ var Scene = function(model, textureDir) {
   }
 
   this.itemCount = function() {
-    return items.length
+    return items.length;
   }
 
   this.clearItems = function() {
