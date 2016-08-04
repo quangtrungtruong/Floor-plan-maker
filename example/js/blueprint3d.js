@@ -50905,7 +50905,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
     renderer.shadowMapType = THREE.PCFSoftShadowMap;
-    rendererObj = renderer;
 
     scope.controls = new ThreeControls(camera, domElement);
     scope.controlsObj = new ThreeControls(cameraObj, domElement);
@@ -50928,10 +50927,11 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     var skybox = new ThreeSkybox(scene);
     model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
 
+    cameraObj = camera;
+
 	controller = new ThreeController(
       scope, model, camera, scope.element, scope.controls, hud);
     domElement.appendChild(renderer.domElement);
-    domElement.appendChild(rendererObj.domElement);
 
     // handle window resizing
     scope.updateWindowSize();
@@ -51003,11 +51003,12 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
   function shouldRender() {
     // Do we need to draw a new frame
-    if (scope.controls.needsUpdate || controller.needsUpdate || needsUpdate || model.scene.needsUpdate) {
+    if (scope.controls.needsUpdate || controller.needsUpdate || needsUpdate || model.scene.needsUpdate  || model.sceneObj.needsUpdate ) {
       scope.controls.needsUpdate = false;
       controller.needsUpdate = false;
       needsUpdate = false;
       model.scene.needsUpdate = false;
+      model.sceneObj.needsUpdate = false;
       return true;
     } else {
       return false;
@@ -51018,20 +51019,9 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     spin();
     if (shouldRender()) {
       renderer.clear();
-      renderer.render(sceneObj.getScene(), camera);
+      renderer.render(scene.getScene(), camera);
       renderer.clearDepth();
       renderer.render(hud.getScene(), camera);
-    }
-    lastRender = Date.now();
-  };
-
-  function renderObj() {
-    spin();
-    if (shouldRender()) {
-      rendererObj.clear();
-      rendererObj.render(sceneObj.getScene(), cameraObj);
-      rendererObj.clearDepth();
-      rendererObj.render(hud.getScene(), cameraObj);
     }
     lastRender = Date.now();
   };
@@ -51082,10 +51072,10 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
     scope.controls.target = pan;
 
-    var distance = model.floorplan.getSize().z * 2;
+    var distance = model.floorplan.getSize().z * 1.5;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(0, distance, 0));
+      new THREE.Vector3(0, distance, distance));
     //scope.controls.setOffset(offset);
     camera.position.copy(offset);
 
