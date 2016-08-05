@@ -50919,15 +50919,16 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     lights = new ThreeLights(sceneObj, model.floorplan);
 
     floorplan = new ThreeFloorplan(sceneObj,
-      model.floorplan, scope.controlsObj);
+      model.floorplan, scope.controls);
 
     floorplan = new ThreeFloorplan(scene,
       model.floorplan, scope.controls);
 
     var skybox = new ThreeSkybox(scene);
     model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
+    //model.floorplan.fireOnUpdatedRooms(scope.centerCameraObj);
 
-    cameraObj = camera;
+    //cameraObj = camera;
 
 	controller = new ThreeController(
       scope, model, camera, scope.element, scope.controls, hud);
@@ -50989,6 +50990,10 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     return controller;
   }
 
+  this.getSceneObj = function() {
+    return sceneObj;
+  }
+
   this.getFloorplan = function(){
     return floorplan;
   }
@@ -51008,7 +51013,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
       controller.needsUpdate = false;
       needsUpdate = false;
       model.scene.needsUpdate = false;
-      model.sceneObj.needsUpdate = false;
+      //model.sceneObj.needsUpdate = false;
       return true;
     } else {
       return false;
