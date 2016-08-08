@@ -44926,7 +44926,6 @@ global.Blueprint3d = function(opts) {
 
 	  // var for zoom in and zoom out
 	  this.scaleFactor = 1.1;
-	  var undoManager = floorplan.getUndoManager();
 
 	  function init() {
 		scope.setMode(scope.modes.MOVE);
@@ -44940,6 +44939,14 @@ global.Blueprint3d = function(opts) {
 		$(document).keyup(function(e) {
 		  if (e.keyCode == 27) {
 			escapeKey();
+		  }
+		  else
+		  if (e.keyCode == 90){
+		    floorplan.undo();
+		  }
+		  else
+		  if (e.keyCode == 89){
+		    floorplan.redo();
 		  }
 		});
 
@@ -45066,38 +45073,11 @@ global.Blueprint3d = function(opts) {
 		  if (scope.activeCorner) {
 			scope.activeCorner.removeAll();
 		  } else if (scope.activeWall) {
-			// add redo and undo function
-			undoManager.add({
-				undo: function () {
-					floorplan.newWall(scope.activeWall.start, scope.activeWall.end);
-				},
-				redo: function () {
-					floorplan.removeWall(scope.activeWall);
-				}
-			});
-			scope.activeWall.remove();
+			floorplan.removeWall(scope.activeWall);
 		  } else if (scope.activeDoor){
-				// add redo and undo function
-				undoManager.add({
-					undo: function () {
-						floorplan.newDoor(scope.activeDoor.getCenterX(), scope.activeDoor.getCenterY());
-					},
-					redo: function () {
-						scope.activeDoor.remove();
-					}
-				});
-			  scope.activeDoor.remove();
+			  floorplan.removeDoor(scope.activeDoor);
 		  } else if (scope.activeWindow){
-			  // add redo and undo function
-				undoManager.add({
-					undo: function () {
-						floorplan.newWindow(scope.activeWindow.getCenterX(), scope.activeWindow.getCenterY());
-					},
-					redo: function () {
-						scope.activeWindow.remove();
-					}
-				});
-			  scope.activeWindow.remove();
+			  floorplan.removeWindow(scope.activeWindow);
 		  }
 		   else  scope.setMode(scope.modes.MOVE);
 		}
@@ -45430,15 +45410,6 @@ global.Blueprint3d = function(opts) {
 			var corner4 = floorplan.newCorner(corner1.getX(), scope.targetY);
 			corners.push(corner4);
 			var addRoom = floorplan.newRoom(corners);
-			// add redo and undo function
-			undoManager.add({
-				undo: function () {
-					floorplan.removeRoom(corners);
-				},
-				redo: function () {
-					floorplan.newRoom(addRoom.getCorners());
-				}
-			});
 			scope.setMode(scope.modes.MOVE);
 			scope.lastNode = null;
 		  }
@@ -45450,17 +45421,6 @@ global.Blueprint3d = function(opts) {
 		// draw windows
 		if (scope.mode == scope.modes.DRAW_WINDOW && !mouseMoved) {
 		  var addWindow = floorplan.newWindow(scope.targetX, scope.targetY);
-
-		  // add redo and undo function
-			undoManager.add({
-				undo: function () {
-					floorplan.removeWindow(addWindow);
-				},
-				redo: function () {
-					floorplan.newWindow(scope.targetX, scope.targetY);
-				}
-			});
-
 		  scope.setMode(scope.modes.MOVE);
 		  hoverWindow = floorplan.overlappedWindow(mouseX, mouseY);
 		  if (hoverWindow){
@@ -45478,16 +45438,6 @@ global.Blueprint3d = function(opts) {
 		    hoverDoor.arrangeDoor(floorplan.getWalls());
 		    hoverDoor.mergeWithIntersected(floorplan.getWalls());
 		  }
-
-		  // add redo and undo function
-			undoManager.add({
-				undo: function () {
-					floorplan.removeDoor(addDoor);
-				},
-				redo: function () {
-					floorplan.newDoor(mouseX, mouseY);
-				}
-			});
 		}
 		mouseClick = true;
 
@@ -45510,17 +45460,6 @@ global.Blueprint3d = function(opts) {
 	  this.addCornerInWall = function(hoverWall, mouseX, mouseY){
 	    if (floorplan.getWalls().indexOf(hoverWall)>-1)
 	      var addCorner = floorplan.addCornerInWall(hoverWall, mouseX, mouseY);
-
-	      // add redo and undo function
-			undoManager.add({
-				undo: function () {
-					floorplan.removeCornerInWall(addDoor);
-				},
-				redo: function () {
-					floorplan.addCornerInWall(hoverWall, mouseX, mouseY);
-				}
-			});
-
 	      updateTarget();
 	      floorplan.update();
 	  }
@@ -47247,12 +47186,12 @@ var JQUERY = require('jquery');
 		});
 	  }
 
-	  this.getUndoManager = function(){
-	    return undoManager;
+	  this.undo = function(){
+	    undoManager.undo();
 	  }
 
-	  this.setUndoManager = function(undoMan){
-	    undoManager = undoMan;
+	  this.redo = function(){
+	    undoManager.redo();
 	  }
 
 	  this.fireOnNewWall = function(callback) {
@@ -47271,19 +47210,47 @@ var JQUERY = require('jquery');
 		updated_rooms.add(callback);
 	  }
 
-	  this.newWall = function(start, end) {
+	  this.newWall = function(start, end, isServingForRoom) {
 		var wall = new Wall(start, end);
 		walls.push(wall)
 		wall.fireOnDelete(removeWall);
 		new_wall_callbacks.fire(wall);
+		if ((isServingForRoom==undefined) || (isServingForRoom==false)){
+			// add redo and undo function
+			undoManager.add({
+				undo: function () {
+					scope.removeWall(wall);
+				},
+				redo: function () {
+					scope.newWall(start, end);
+				}
+			});
+		}
 		scope.update();
 		return wall;
+	  }
+
+	  this.removeWall = function(wall, isServingForRoom){
+	    if ((isServingForRoom==undefined) || (isServingForRoom==false)){
+			// add redo and undo function
+			undoManager.add({
+				undo: function () {
+					scope.newWall(wall.getStart(), wall.getEnd());
+				},
+				redo: function () {
+					scope.removeWall(wall);
+				}
+			});
+		}
+	    wall.start.detachWall(wall);
+		wall.end.detachWall(wall);
+		removeWall(wall);
 	  }
 
 	  this.newRoom = function(corners) {
 		var ids = [];
 		for (var i =0; i<corners.length; i++){
-		  var wall = this.newWall(corners[i], corners[(i+1)%corners.length]);
+		  var wall = this.newWall(corners[i], corners[(i+1)%corners.length], true);
 		  ids.push(wall);
 		}
 
@@ -47296,55 +47263,30 @@ var JQUERY = require('jquery');
 			   walls[j].rooms.push(room);
 		}
 		rooms.push(room);
-
 		scope.update();
+		// add redo and undo function
+		undoManager.add({
+			undo: function () {
+				scope.removeRoom(room);
+			},
+			redo: function () {
+				scope.newRoom(this, room.getCorners());
+			}
+		});
 		return room;
 	  }
 
-	  this.setRoomThickness = function(thickness){
-		roomThickness = thickness;
-	  }
-
-	  this.newDoor = function(x, y){
-		var door = new Door(this, x, y);
-		door.arrangeDoor(walls);
-		doors.push(door);
-		scope.update();
-		return door;
-	  }
-
-	    this.newWindow = function(x, y){
-		var window = new Window(this, x, y);
-		window.arrangeWindow(walls);
-		var id = window.getClosestWallWindow();
-		windows.push(window);
-		scope.update();
-		return window;
-	  }
-
-	  function removeWall(wall) {
-		utils.removeValue(walls, wall);
-		scope.update();
-	  }
-
-	  this.removeWall = function(wall){
-	    wall.start.detachWall(wall);
-		wall.end.detachWall(wall);
-		removeWall(wall);
-	  }
-
-	  this.removeDoor = function(door){
-	    doors.splice(doors.indexOf(door), 1);
-	    scope.update();
-	  }
-
-	  this.removeWindow = function(window){
-	    var t = windows.indexOf(window);
-	    windows.splice(windows.indexOf(window), 1);
-	    scope.update();
-	  }
-
 	  this.removeRoom = function(room){
+        // add redo and undo function
+		undoManager.add({
+			undo: function () {
+				scope.newRoom(this, room.getCorners());
+			},
+			redo: function () {
+				scope.removeRoom(room);
+			}
+		});
+
         var corner1 = room.getCorners()[0];
         var corner2 = corner1;
          var flag = true;
@@ -47390,6 +47332,82 @@ var JQUERY = require('jquery');
           }
         }
         scope.update();
+	  }
+
+	  this.setRoomThickness = function(thickness){
+		roomThickness = thickness;
+	  }
+
+	  this.newDoor = function(x, y){
+		var door = new Door(this, x, y);
+		door.arrangeDoor(walls);
+		doors.push(door);
+		scope.update();
+
+		// add redo and undo function
+		undoManager.add({
+			undo: function () {
+				door.remove();
+			},
+			redo: function () {
+				scope.newDoor(x, y);
+			}
+		});
+		return door;
+	  }
+
+	  this.removeDoor = function(door){
+	    doors.splice(doors.indexOf(door), 1);
+	    scope.update();
+	      // add redo and undo function
+		undoManager.add({
+			undo: function () {
+				scope.newDoor(door.getCenterX(), door.getCenterY());
+			},
+			redo: function () {
+				door.remove();
+			}
+		});
+	  }
+
+      this.newWindow = function(x, y){
+		var window = new Window(this, x, y);
+		window.arrangeWindow(walls);
+		var id = window.getClosestWallWindow();
+		windows.push(window);
+		scope.update();
+		// add redo and undo function
+		undoManager.add({
+			undo: function () {
+				window.remove();
+			},
+			redo: function () {
+				scope.newWindow(x, y);
+			}
+		});
+		return window;
+	  }
+
+	  this.removeWindow = function(window){
+	    var t = windows.indexOf(window);
+	    windows.splice(windows.indexOf(window), 1);
+	    scope.update();
+
+	    // add redo and undo function
+		undoManager.add({
+			undo: function () {
+				scope.newWindow(window.getCenterX(), window.getCenterY());
+			},
+			redo: function () {
+				window.remove();
+			}
+		});
+		window.remove();
+	  }
+
+	  function removeWall(wall) {
+		utils.removeValue(walls, wall);
+		scope.update();
 	  }
 
 	  this.newCorner = function(x, y, id) {
@@ -47485,6 +47503,15 @@ var JQUERY = require('jquery');
 		var corner = new Corner(this, betweenPoint.x, betweenPoint.y);
 		var wall1 = new Wall(start, corner);
 		var wall2 = new Wall(corner, end);
+		// add redo and undo function
+		undoManager.add({
+			undo: function () {
+				removeCornerInWall(corner);
+			},
+			redo: function () {
+				floorplan.addCornerInWall(wall, mouseX, mouseY);
+			}
+		});
 		start.detachWall(wall);
 		end.detachWall(wall);
 		removeWall(wall);
