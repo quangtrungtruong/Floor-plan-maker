@@ -44926,6 +44926,7 @@ global.Blueprint3d = function(opts) {
 
 	  // var for zoom in and zoom out
 	  this.scaleFactor = 1.1;
+	  var undoManager = floorplan.getUndoManager();
 
 	  function init() {
 		scope.setMode(scope.modes.MOVE);
@@ -45065,10 +45066,37 @@ global.Blueprint3d = function(opts) {
 		  if (scope.activeCorner) {
 			scope.activeCorner.removeAll();
 		  } else if (scope.activeWall) {
+			// add redo and undo function
+			undoManager.add({
+				undo: function () {
+					floorplan.newWall(scope.activeWall.start, scope.activeWall.end);
+				},
+				redo: function () {
+					floorplan.removeWall(scope.activeWall);
+				}
+			});
 			scope.activeWall.remove();
 		  } else if (scope.activeDoor){
+				// add redo and undo function
+				undoManager.add({
+					undo: function () {
+						floorplan.newDoor(scope.activeDoor.getCenterX(), scope.activeDoor.getCenterY());
+					},
+					redo: function () {
+						scope.activeDoor.remove();
+					}
+				});
 			  scope.activeDoor.remove();
 		  } else if (scope.activeWindow){
+			  // add redo and undo function
+				undoManager.add({
+					undo: function () {
+						floorplan.newWindow(scope.activeWindow.getCenterX(), scope.activeWindow.getCenterY());
+					},
+					redo: function () {
+						scope.activeWindow.remove();
+					}
+				});
 			  scope.activeWindow.remove();
 		  }
 		   else  scope.setMode(scope.modes.MOVE);
@@ -47166,6 +47194,7 @@ var JQUERY = require('jquery');
 	  var rooms = [];
 	  var doors = [];
 	  var windows = [];
+	  var undoManager = new UndoManager();
 
 	  var context = null;
 
@@ -47216,6 +47245,14 @@ var JQUERY = require('jquery');
 		return utils.map(rooms, function(room) {
 		  return room.floorPlane;
 		});
+	  }
+
+	  this.getUndoManager = function(){
+	    return undoManager;
+	  }
+
+	  this.setUndoManager = function(undoMan){
+	    undoManager = undoMan;
 	  }
 
 	  this.fireOnNewWall = function(callback) {
@@ -51671,14 +51708,20 @@ var utils = {};
 		return result;
     }
 
-    utils.removeFromTo = function(array, from, to) {
+	module.exports = utils;
+},{}]},{},[3]);
+(function() {
+
+	'use strict';
+
+    function removeFromTo(array, from, to) {
         array.splice(from,
             !to ||
             1 + to - from + (!(to < 0 ^ from >= 0) && (to < 0 || -1) * array.length));
         return array.length;
     }
 
-    utils.undoManager = function() {
+    var UndoManager = function() {
 
         var commands = [],
             index = -1,
@@ -51718,7 +51761,7 @@ var utils = {};
 
                 // if limit is set, remove items from the start
                 if (limit && commands.length > limit) {
-                    utils.removeFromTo(commands, 0, -(limit+1));
+                    removeFromTo(commands, 0, -(limit+1));
                 }
 
                 // set the current index to the end
@@ -51804,5 +51847,15 @@ var utils = {};
         };
     };
 
-	module.exports = utils;
-},{}]},{},[3]);
+	if (typeof define === 'function' && typeof define.amd === 'object' && define.amd) {
+		// AMD. Register as an anonymous module.
+		define(function() {
+			return UndoManager;
+		});
+	} else if (typeof module !== 'undefined' && module.exports) {
+		module.exports = UndoManager;
+	} else {
+		window.UndoManager = UndoManager;
+	}
+
+}());
