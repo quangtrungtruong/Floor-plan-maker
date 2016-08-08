@@ -44943,10 +44943,12 @@ global.Blueprint3d = function(opts) {
 		  else
 		  if (e.keyCode == 90){
 		    floorplan.undo();
+		    updateTarget();
 		  }
 		  else
 		  if (e.keyCode == 89){
 		    floorplan.redo();
+		    updateTarget();
 		  }
 		});
 
@@ -47343,11 +47345,10 @@ var JQUERY = require('jquery');
 		door.arrangeDoor(walls);
 		doors.push(door);
 		scope.update();
-
 		// add redo and undo function
 		undoManager.add({
 			undo: function () {
-				door.remove();
+				scope.removeDoor(door);
 			},
 			redo: function () {
 				scope.newDoor(x, y);
@@ -47373,13 +47374,12 @@ var JQUERY = require('jquery');
       this.newWindow = function(x, y){
 		var window = new Window(this, x, y);
 		window.arrangeWindow(walls);
-		var id = window.getClosestWallWindow();
 		windows.push(window);
 		scope.update();
 		// add redo and undo function
 		undoManager.add({
 			undo: function () {
-				window.remove();
+				scope.removeWindow(window);
 			},
 			redo: function () {
 				scope.newWindow(x, y);
@@ -47481,8 +47481,8 @@ var JQUERY = require('jquery');
 	  }
 
 	  this.removeCornerInWall = function(corner){
-	    var wallStart = corner.wallStarts()[0];
-	    var wallEnd = corner.wallEnds()[0];
+	    var wallStart = corner.wallStarts[0];
+	    var wallEnd = corner.wallEnds[0];
 	    var start = wallStart.end;
 	    var end = wallEnd.start;
 	    start.detachWall(wallStart);
@@ -47506,7 +47506,7 @@ var JQUERY = require('jquery');
 		// add redo and undo function
 		undoManager.add({
 			undo: function () {
-				removeCornerInWall(corner);
+				scope.removeCornerInWall(corner);
 			},
 			redo: function () {
 				floorplan.addCornerInWall(wall, mouseX, mouseY);
