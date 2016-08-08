@@ -419,7 +419,7 @@ var ContextMenu2D = function(blueprint3d) {
         var checked = $(this).prop('checked');
         if (checked){
           if (type=="wall")
-            selectedItem.remove();
+            scope.floorplan.removeWall(selectedItem);
             else if (type=="door")
               scope.floorplan.removeDoor(selectedItem);
               else if (type=="window")

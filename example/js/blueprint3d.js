@@ -47272,23 +47272,16 @@ var JQUERY = require('jquery');
 				scope.removeRoom(room);
 			},
 			redo: function () {
-				scope.newRoom(this, room.getCorners());
+				for (var i=0; i<corners.length; i++){
+				  corners[i] = scope.newCorner(corners[i].getX(), corners[i].getY(), corners[i].id);
+				}
+				scope.newRoom(corners);
 			}
 		});
 		return room;
 	  }
 
 	  this.removeRoom = function(room){
-        // add redo and undo function
-		undoManager.add({
-			undo: function () {
-				scope.newRoom(this, room.getCorners());
-			},
-			redo: function () {
-				scope.removeRoom(room);
-			}
-		});
-
         var corner1 = room.getCorners()[0];
         var corner2 = corner1;
          var flag = true;
@@ -47312,7 +47305,7 @@ var JQUERY = require('jquery');
 			  corner1 = corner2;
             }
         }*/
-
+        var cloneWalls = [];
         for (var i=0; i<room.getCorners().length; i++){
           for (var j=i+1; j<room.getCorners().length; j++){
             if (room.getCorners()[i].adjacentCorners().indexOf(room.getCorners()[j])>-1){
@@ -47327,12 +47320,24 @@ var JQUERY = require('jquery');
                   if (((walls[k].getStart()==room.getCorners()[i]) && (walls[k].getEnd()==room.getCorners()[j])) ||
                   ((walls[k].getEnd()==room.getCorners()[i]) && (walls[k].getStart()==room.getCorners()[j])))
                     //walls[k].remove();
-                    scope.removeWall(walls[k]);
+                    cloneWalls.push(walls[k]);
                 }
               }
             }
           }
         }
+        // add redo and undo function
+		undoManager.add({
+			undo: function () {
+				for (var i=0; i<cloneWalls.length; i++)
+		  		  scope.newWall(cloneWalls[i].getStart(), cloneWalls[i].getEnd(), true);
+			},
+			redo: function () {
+				scope.removeRoom(room);
+			}
+		});
+		for (var i=0; i<cloneWalls.length; i++)
+		  scope.removeWall(cloneWalls[i], true);
         scope.update();
 	  }
 
