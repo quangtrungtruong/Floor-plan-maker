@@ -47249,14 +47249,14 @@ var JQUERY = require('jquery');
 		removeWall(wall);
 	  }
 
-	  this.newRoom = function(corners) {
+	  this.newRoom = function(roomCorners) {
 		var ids = [];
-		for (var i =0; i<corners.length; i++){
-		  var wall = this.newWall(corners[i], corners[(i+1)%corners.length], true);
+		for (var i =0; i<roomCorners.length; i++){
+		  var wall = this.newWall(roomCorners[i], roomCorners[(i+1)%roomCorners.length], true);
 		  ids.push(wall);
 		}
 
-		var room = new Room(this, corners);
+		var room = new Room(this, roomCorners);
 		room.walls = ids;
 		room.setGeneralThickness(roomThickness);
 		for (var i=0; i<room.walls.length; i++){
@@ -47272,10 +47272,10 @@ var JQUERY = require('jquery');
 				scope.removeRoom(room);
 			},
 			redo: function () {
-				for (var i=0; i<corners.length; i++){
-				  corners[i] = scope.newCorner(corners[i].getX(), corners[i].getY(), corners[i].id);
+				for (var i=0; i<roomCorners.length; i++){
+				  roomCorners[i] = scope.newCorner(roomCorners[i].getX(), roomCorners[i].getY(), roomCorners[i].id);
 				}
-				scope.newRoom(corners);
+				scope.newRoom(roomCorners);
 			}
 		});
 		return room;
@@ -47318,9 +47318,11 @@ var JQUERY = require('jquery');
               if (flag){
                 for (var k=0; k<walls.length; k++){
                   if (((walls[k].getStart()==room.getCorners()[i]) && (walls[k].getEnd()==room.getCorners()[j])) ||
-                  ((walls[k].getEnd()==room.getCorners()[i]) && (walls[k].getStart()==room.getCorners()[j])))
+                  ((walls[k].getEnd()==room.getCorners()[i]) && (walls[k].getStart()==room.getCorners()[j]))){
                     //walls[k].remove();
                     cloneWalls.push(walls[k]);
+                    //scope.removeWall(walls[k], true);
+                  }
                 }
               }
             }
@@ -47329,11 +47331,37 @@ var JQUERY = require('jquery');
         // add redo and undo function
 		undoManager.add({
 			undo: function () {
-				for (var i=0; i<cloneWalls.length; i++)
-		  		  scope.newWall(cloneWalls[i].getStart(), cloneWalls[i].getEnd(), true);
+				for (var i=0; i<cloneWalls.length; i++){
+				  var start = cloneWalls[i].getStart();
+				  var end = cloneWalls[i].getEnd();
+
+				  var checkExistedflag = false;
+				  utils.forEach(corners, function(corner){
+				    if (corner.id==start.id)
+				      checkExistedflag = true;
+				  });
+				  if (!checkExistedflag)
+				    corners.push(start);
+				  checkExistedflag = false;
+				  utils.forEach(corners, function(corner){
+				    if (corner.id==end.id)
+				      checkExistedflag = true;
+				  });
+				  if (!checkExistedflag)
+				    corners.push(end);
+
+				  scope.newWall(start, end, true);
+				}
+		  		//scope.newRoom(corners);
 			},
 			redo: function () {
-				scope.removeRoom(room);
+				var ss = walls;
+				utils.forEach(cloneWalls, function(wall){
+				  //scope.removeWall(wall, true);
+				  wall.remove();
+				});
+				scope.update();
+				ss = walls;
 			}
 		});
 		for (var i=0; i<cloneWalls.length; i++)
