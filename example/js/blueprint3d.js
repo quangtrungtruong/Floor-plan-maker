@@ -47224,7 +47224,22 @@ var JQUERY = require('jquery');
 					scope.removeWall(wall);
 				},
 				redo: function () {
-					scope.newWall(start, end);
+					var startFlag = true, endFlag = true;
+					utils.forEach(corners, function(corner){
+					  if (corner.id == start.id){
+					    startFlag = false;
+					    start = corner;
+					  }
+					  if (corner.id == end.id){
+					    endFlag = false;
+					    end = corner;
+					  }
+					});
+					if (startFlag)
+					  start = scope.newCorner(start.x, start.y, start.id);
+					if (endFlag)
+					  end = scope.newCorner(end.x, end.y, end.id);
+					var wall = scope.newWall(start, end);
 				}
 			});
 		}
@@ -47249,7 +47264,20 @@ var JQUERY = require('jquery');
 		removeWall(wall);
 	  }
 
+	  function clone(cloneCorners, cloneWalls, cloneRooms, cloneWindows){
+		  cloneCorners = corners;
+		  cloneWalls = walls;
+		  cloneRooms = rooms;
+		  cloneDoors = doors;
+		  cloneWindows = windows;
+	  }
+
 	  this.newRoom = function(roomCorners) {
+	  var cloneWalls = [];
+	  var cloneCorners = [];
+	  var cloneRooms = [];
+	  var cloneDoors = [];
+	  var cloneWindows = [];
 		var ids = [];
 		for (var i =0; i<roomCorners.length; i++){
 		  var wall = this.newWall(roomCorners[i], roomCorners[(i+1)%roomCorners.length], true);
@@ -47261,11 +47289,14 @@ var JQUERY = require('jquery');
 		room.setGeneralThickness(roomThickness);
 		for (var i=0; i<room.walls.length; i++){
 		   for (j=0; j<walls.length; j++)
+		   for (j=0; j<walls.length; j++)
 			 if (walls[j]==room.walls[i])
 			   walls[j].rooms.push(room);
 		}
+
 		rooms.push(room);
 		scope.update();
+		clone(true);
 		// add redo and undo function
 		undoManager.add({
 			undo: function () {
@@ -47329,6 +47360,7 @@ var JQUERY = require('jquery');
           }
         }
         // add redo and undo function
+        var addedWall = [];
 		undoManager.add({
 			undo: function () {
 				for (var i=0; i<cloneWalls.length; i++){
@@ -47350,18 +47382,15 @@ var JQUERY = require('jquery');
 				  if (!checkExistedflag)
 				    corners.push(end);
 
-				  scope.newWall(start, end, true);
+				  addedWall.push(scope.newWall(start, end, true));
 				}
 		  		//scope.newRoom(corners);
 			},
 			redo: function () {
-				var ss = walls;
-				utils.forEach(cloneWalls, function(wall){
-				  //scope.removeWall(wall, true);
-				  wall.remove();
+				utils.forEach(addedWall, function(wall){
+				  scope.removeWall(wall, true);
 				});
 				scope.update();
-				ss = walls;
 			}
 		});
 		for (var i=0; i<cloneWalls.length; i++)
