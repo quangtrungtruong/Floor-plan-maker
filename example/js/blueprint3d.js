@@ -51037,15 +51037,13 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
   var scene = model.scene;
   var sceneObj = model.sceneObj;
-
+  var sceneObjFinal;
   var model = model;
   this.element = JQUERY(element);
   var domElement;
 
   var camera;
-  var cameraObj;
   var renderer;
-  var rendererObj;
   this.controls;
   var canvas;
   var controller;
@@ -51077,10 +51075,10 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   function init() {
     THREE.ImageUtils.crossOrigin = "";
 
+    scope.resetSceneObjFinal();
     domElement = scope.element.get(0) // Container
     camera = new THREE.PerspectiveCamera(45, 1, 1, 10000);
-    //cameraObj = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
-    cameraObj = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+    //camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       preserveDrawingBuffer: true // required to support .toDataURL()
@@ -51089,19 +51087,15 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     renderer.shadowMapEnabled = true;
     renderer.shadowMapSoft = true;
     renderer.shadowMapType = THREE.PCFSoftShadowMap;
-    rendererObj = new THREE.WebGLRenderer({
-      antialias: true,
-      preserveDrawingBuffer: true // required to support .toDataURL()
-    });
 
     scope.controls = new ThreeControls(camera, domElement);
-    scope.controlsObj = new ThreeControls(cameraObj, domElement);
+    //scope.controlsObj = new ThreeControls(cameraObj, domElement);
 
     hud = new ThreeHUD(scope);
 
     // setup camera nicely
     scope.centerCamera();
-    scope.centerCameraObj();
+    //scope.centerCameraObj();
 
     var lights = new ThreeLights(scene, model.floorplan);
     lights = new ThreeLights(sceneObj, model.floorplan);
@@ -51158,9 +51152,39 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     hasClicked = true;
   }
 
+  this.resetSceneObjFinal = function(){
+    sceneObjFinal = null;
+  }
+
   this.exportObj = function(){
-    scope.centerCameraObj();
-    return rendererObj.export(sceneObj.getScene());
+    if ((sceneObjFinal==undefined) || (sceneObjFinal==null)){
+		var pan = model.floorplan.getCenter();
+		pan.y = 150;
+
+		//scope.controlsObj.target = pan;
+
+		var distance = model.floorplan.getSize().z * 2;
+
+		var offset = pan.clone().add(
+		  new THREE.Vector3(0, 100, 0));
+		//scope.controls.setOffset(offset);
+		var cameraObj = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+		cameraObj.position.set(offset);
+
+		var rendererObj = new THREE.WebGLRenderer({
+		  antialias: true,
+		  preserveDrawingBuffer: true // required to support .toDataURL()
+		});
+		rendererObj.autoClear = false,
+		rendererObj.shadowMapEnabled = true;
+		rendererObj.shadowMapSoft = true;
+		rendererObj.shadowMapType = THREE.PCFSoftShadowMap;
+		rendererObj.clear();
+		rendererObj.render(sceneObj.getScene(), cameraObj);
+		rendererObj.clearDepth();
+		sceneObjFinal = rendererObj.export(sceneObj.getScene());
+	}
+    return sceneObjFinal;
   }
 
   this.options = function() {
@@ -51269,7 +51293,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     var distance = model.floorplan.getSize().z * 1.5;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(distance/2, distance*10, distance*2));
+      new THREE.Vector3(0, distance, 0));
     //scope.controls.setOffset(offset);
     camera.position.copy(offset);
 
@@ -51277,39 +51301,21 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
 
   this.centerCameraObj = function() {
-    var yOffset = 150.0;
-
-    var pan = model.floorplan.getCenter();
-    pan.y = yOffset;
-
-    scope.controls.target = pan;
-
-    var distance = model.floorplan.getSize().z * 1.5;
-
-    var offset = pan.clone().add(
-      new THREE.Vector3(distance/2, distance*10, distance*2));
-    //scope.controls.setOffset(offset);
-    cameraObj.position.copy(offset);
-
-    scope.controls.update();
-  }
-  /*this.centerCameraObj = function() {
         var yOffset = 150.0;
 
     var pan = model.floorplan.getCenter();
     pan.y = yOffset;
 
-    scope.controlsObj.target = pan;
+    //scope.controlsObj.target = pan;
 
     var distance = model.floorplan.getSize().z * 2;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(distance/2, distance*10, distance*2));
+      new THREE.Vector3(0, 100, 0));
     //scope.controls.setOffset(offset);
-    cameraObj.position.copy(offset);
-
+    cameraObj.position.set(offset);
     scope.controlsObj.update();
-  }*/
+  }
 
   // projects the object's center point into x,y screen coords
   // x,y are relative to top left corner of viewer
