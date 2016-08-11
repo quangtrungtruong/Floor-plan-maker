@@ -51040,7 +51040,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   var sceneObjFinal;
   var model = model;
   this.element = JQUERY(element);
-  var domElement;
+  var domElement, hemiLight;
 
   var camera;
   var renderer;
@@ -51097,8 +51097,8 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     scope.centerCamera();
     //scope.centerCameraObj();
 
-    var lights = new ThreeLights(scene, model.floorplan);
-    lights = new ThreeLights(sceneObj, model.floorplan);
+//    var lights = new ThreeLights(scene, model.floorplan);
+    var lights = new ThreeLights(sceneObj, model.floorplan);
 
     floorplan = new ThreeFloorplan(sceneObj,
       model.floorplan, scope.controls);
@@ -51106,7 +51106,75 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     floorplan = new ThreeFloorplan(scene,
       model.floorplan, scope.controls);
 
-    var skybox = new ThreeSkybox(scene);
+    scene.fog = new THREE.Fog( 0xffffff, 1, 5000 );
+	scene.fog.color.setHSL( 0.6, 0, 1 );
+
+    // LIGHTS
+
+	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+	hemiLight.color.setHSL( 0.6, 1, 0.6 );
+	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+	hemiLight.position.set( 0, 500, 0 );
+	//scene.add( hemiLight );
+
+	//
+
+	dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+	dirLight.color.setHSL( 0.1, 1, 0.95 );
+	dirLight.position.set( -1, 1.75, 1 );
+	dirLight.position.multiplyScalar( 50 );
+	scene.add( dirLight );
+
+	dirLight.castShadow = true;
+
+	dirLight.shadowMapWidth = 2048;
+	dirLight.shadowMapHeight = 2048;
+
+	var d = 50;
+
+	dirLight.shadowCameraLeft = -d;
+	dirLight.shadowCameraRight = d;
+	dirLight.shadowCameraTop = d;
+	dirLight.shadowCameraBottom = -d;
+
+	dirLight.shadowCameraFar = 3500;
+	dirLight.shadowBias = -0.0001;
+	//dirLight.shadowCameraVisible = true;
+
+    // GROUND
+
+	var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
+	var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
+	groundMat.color.setHSL( 0.095, 1, 0.75 );
+
+	var ground = new THREE.Mesh( groundGeo, groundMat );
+	ground.rotation.x = -Math.PI/2;
+	ground.position.y = -33;
+	scene.add( ground );
+
+	ground.receiveShadow = true;
+
+	// SKYDOME
+
+	var vertexShader = document.getElementById( 'vertexShader' ).textContent;
+	var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+	var uniforms = {
+		topColor:    { value: new THREE.Color( 0x0077ff ) },
+		bottomColor: { value: new THREE.Color( 0xffffff ) },
+		offset:      { value: 33 },
+		exponent:    { value: 0.6 }
+	};
+	uniforms.topColor.value.copy( hemiLight.color );
+
+	scene.fog.color.copy( uniforms.bottomColor.value );
+
+	var skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
+	var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+
+	var sky = new THREE.Mesh( skyGeo, skyMat );
+	scene.add( sky );
+
+    //var skybox = new ThreeSkybox(scene);
     model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
     //model.floorplan.fireOnUpdatedRooms(scope.centerCameraObj);
 
@@ -51293,7 +51361,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     var distance = model.floorplan.getSize().z * 1.5;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(0, distance, 0));
+      new THREE.Vector3(0, distance, distance));
     //scope.controls.setOffset(offset);
     camera.position.copy(offset);
 
