@@ -51077,7 +51077,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
     scope.resetSceneObjFinal();
     domElement = scope.element.get(0) // Container
-    camera = new THREE.PerspectiveCamera(45, 1, 1, 10000);
+    camera = new THREE.PerspectiveCamera(50, 1, 1, 10000);
     //camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
     renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -51115,7 +51115,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 	hemiLight.color.setHSL( 0.6, 1, 0.6 );
 	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
 	hemiLight.position.set( 0, 500, 0 );
-	//scene.add( hemiLight );
+	scene.add( hemiLight );
 
 	//
 
@@ -51123,7 +51123,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 	dirLight.color.setHSL( 0.1, 1, 0.95 );
 	dirLight.position.set( -1, 1.75, 1 );
 	dirLight.position.multiplyScalar( 50 );
-	scene.add( dirLight );
+	//scene.add( dirLight );
 
 	dirLight.castShadow = true;
 
