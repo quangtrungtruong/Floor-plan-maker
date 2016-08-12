@@ -51106,41 +51106,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     floorplan = new ThreeFloorplan(scene,
       model.floorplan, scope.controls);
 
-    scene.fog = new THREE.Fog( 0xffffff, 1, 5000 );
-	scene.fog.color.setHSL( 0.6, 0, 1 );
-
-    // LIGHTS
-
-	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
-	hemiLight.color.setHSL( 0.6, 1, 0.6 );
-	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
-	hemiLight.position.set( 0, 500, 0 );
-	scene.add( hemiLight );
-
-	//
-
-	dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-	dirLight.color.setHSL( 0.1, 1, 0.95 );
-	dirLight.position.set( -1, 1.75, 1 );
-	dirLight.position.multiplyScalar( 50 );
-	//scene.add( dirLight );
-
-	dirLight.castShadow = true;
-
-	dirLight.shadowMapWidth = 2048;
-	dirLight.shadowMapHeight = 2048;
-
-	var d = 50;
-
-	dirLight.shadowCameraLeft = -d;
-	dirLight.shadowCameraRight = d;
-	dirLight.shadowCameraTop = d;
-	dirLight.shadowCameraBottom = -d;
-
-	dirLight.shadowCameraFar = 3500;
-	dirLight.shadowBias = -0.0001;
-	//dirLight.shadowCameraVisible = true;
-
     // GROUND
 
 	var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
@@ -51154,18 +51119,8 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
 	ground.receiveShadow = true;
 
-	// SKYDOME
-	var uniforms = {
-		topColor:    { value: new THREE.Color( 0x0077ff ) },
-		bottomColor: { value: new THREE.Color( 0xffffff ) },
-		offset:      { value: 33 },
-		exponent:    { value: 0.6 }
-	};
-	uniforms.topColor.value.copy( hemiLight.color );
-
-	scene.fog.color.copy( uniforms.bottomColor.value );
-
     var skybox = new ThreeSkybox(scene);
+    renderer.setClearColor( scene.fog.color );
     model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
     //model.floorplan.fireOnUpdatedRooms(scope.centerCameraObj);
 
@@ -51421,6 +51376,7 @@ ThreeSkybox = function(scene) {
   var sphereRadius = 4000
   var widthSegments = 32
   var heightSegments = 15
+  var dirLight, hemiLight;
 
   var vertexShader = [
     "varying vec3 vWorldPosition;",
@@ -51445,6 +51401,37 @@ ThreeSkybox = function(scene) {
 
   function init() {
 
+    scene.fog = new THREE.Fog( 0xffffff, 1, 5000 );
+	scene.fog.color.setHSL( 0.6, 0, 1 );
+    // LIGHTS
+	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+	hemiLight.color.setHSL( 0.6, 1, 0.6 );
+	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+	hemiLight.position.set( 0, 500, 0 );
+	scene.add( hemiLight );
+
+	dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+	dirLight.color.setHSL( 0.1, 1, 0.95 );
+	dirLight.position.set( -1, 1.75, 1 );
+	dirLight.position.multiplyScalar( 50 );
+	scene.add( dirLight );
+
+	dirLight.castShadow = true;
+
+	dirLight.shadowMapWidth = 2048;
+	dirLight.shadowMapHeight = 2048;
+
+	var d = 50;
+
+	dirLight.shadowCameraLeft = -d;
+	dirLight.shadowCameraRight = d;
+	dirLight.shadowCameraTop = d;
+	dirLight.shadowCameraBottom = -d;
+
+	dirLight.shadowCameraFar = 3500;
+	dirLight.shadowBias = -0.0001;
+	//dirLight.shadowCameraVisible = true;
+
     var uniforms = {
         topColor: {
           type: "c",
@@ -51459,6 +51446,9 @@ ThreeSkybox = function(scene) {
           value: verticalOffset
         }
     }
+
+    uniforms.topColor.value.copy( dirLight.color );
+    scene.fog.color.copy( uniforms.bottomColor.value );
 
     var skyGeo = new THREE.SphereGeometry(
       sphereRadius, widthSegments, heightSegments );
