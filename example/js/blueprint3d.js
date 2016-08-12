@@ -45557,7 +45557,7 @@ global.Blueprint3d = function(opts) {
 	  //trackTransforms(context);
 
 	  // grid parameters
-	  var gridSpacing = 20; // pixels
+	  var gridSpacing = 60; // pixels
 	  var gridSpacingMeter = 60;
 	  var gridSpacingFeet = gridSpacingMeter/3.28;
 	  var gridWidth = 1;
@@ -51155,9 +51155,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 	ground.receiveShadow = true;
 
 	// SKYDOME
-
-	var vertexShader = document.getElementById( 'vertexShader' ).textContent;
-	var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
 	var uniforms = {
 		topColor:    { value: new THREE.Color( 0x0077ff ) },
 		bottomColor: { value: new THREE.Color( 0xffffff ) },
@@ -51168,13 +51165,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
 	scene.fog.color.copy( uniforms.bottomColor.value );
 
-	var skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
-	var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
-
-	var sky = new THREE.Mesh( skyGeo, skyMat );
-	scene.add( sky );
-
-    //var skybox = new ThreeSkybox(scene);
+    var skybox = new ThreeSkybox(scene);
     model.floorplan.fireOnUpdatedRooms(scope.centerCamera);
     //model.floorplan.fireOnUpdatedRooms(scope.centerCameraObj);
 
@@ -51358,10 +51349,10 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
     scope.controls.target = pan;
 
-    var distance = model.floorplan.getSize().z * 1.5;
+    var distance = model.floorplan.getSize().z * 15;
 
     var offset = pan.clone().add(
-      new THREE.Vector3(0, distance, distance));
+      new THREE.Vector3(0, distance, 0));
     //scope.controls.setOffset(offset);
     camera.position.copy(offset);
 
@@ -51424,7 +51415,7 @@ ThreeSkybox = function(scene) {
 
   var scene = scene;
 
-  var topColor = 0xffffff;//0xD8ECF9
+  var topColor = 0x0077ff;//0xD8ECF9
   var bottomColor = 0xe9e9e9; //0xf9f9f9;//0x565e63
   var verticalOffset = 500
   var sphereRadius = 4000
@@ -51433,22 +51424,23 @@ ThreeSkybox = function(scene) {
 
   var vertexShader = [
     "varying vec3 vWorldPosition;",
-    "void main() {",
-    "  vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
-    "  vWorldPosition = worldPosition.xyz;",
-    "  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-    "}"
+	"void main() {",
+	"vec4 worldPosition = modelMatrix * vec4( position, 1.0 );",
+	"vWorldPosition = worldPosition.xyz;",
+	"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
+	"}"
   ].join('\n');
 
   var fragmentShader = [
     "uniform vec3 topColor;",
     "uniform vec3 bottomColor;",
     "uniform float offset;",
-    "varying vec3 vWorldPosition;",
-    "void main() {",
-    "  float h = normalize( vWorldPosition + offset ).y;",
-    "  gl_FragColor = vec4( mix( bottomColor, topColor, (h + 1.0) / 2.0), 1.0 );",
-    "}"
+    "uniform float exponent;",
+	"varying vec3 vWorldPosition;",
+	"void main() {",
+	"float h = normalize( vWorldPosition + offset ).y;",
+	"gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );",
+	"}"
   ].join('\n');
 
   function init() {
