@@ -31187,39 +31187,13 @@ THREE.WebGLRenderer = function ( parameters ) {
 			projectObjectForExport( scene, object.children[ i ] );
 
 		}
-
 	}
 
 	this.export = function ( scene) {
-
-		var fog = scene.fog;
-
-		// update Skeleton objects
-
-		/*scene.traverse( function ( object ) {
-
-			if ( object instanceof THREE.SkinnedMesh ) {
-
-				object.skeleton.update();
-
-			}
-
-		} );*/
-
-
-		opaqueObjects.length = 0;
-
-		projectObjectForExport( scene, scene );
-
-		if ( _this.sortObjects === true ) {
-			opaqueObjects.sort( painterSortStable );
-		}
-
 		indexVertex = 0;
 		indexVertexUvs = 0;
 		indexNormals = 0;
-
-		var result = objExporter(opaqueObjects);
+		var result = objExporter(scene.children);
 		return result;
 	};
 
@@ -31361,9 +31335,9 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		for ( var k = 0; k < objectExporter.length; k++ ) {
 
-				if ( objectExporter[k]!=undefined && objectExporter[k].object instanceof THREE.Mesh ) {
+				if ( objectExporter[k]!=undefined && objectExporter[k] instanceof THREE.Mesh ) {
 
-					parseMesh( objectExporter[k].object );
+					parseMesh( objectExporter[k] );
 
 				}
 
@@ -48412,7 +48386,7 @@ var JQUERY = require('jquery');
 	  this.roomSavedCallbacks = JQUERY.Callbacks(); // success (bool), copy (bool)
 	  this.roomDeletedCallbacks = JQUERY.Callbacks();
 
-		  this.loadSerialized = function(data_json) {
+	  this.loadSerialized = function(data_json) {
 		// TODO: better documentation on serialization format.
 		// TODO: a much better serialization format.
 		this.roomLoadingCallbacks.fire();
@@ -48458,6 +48432,74 @@ var JQUERY = require('jquery');
 		this.scene.clearItems();
 		this.sceneObj.clearItems();
 		this.floorplan.loadFloorplan(floorplan);
+
+		// add doors and windows
+		utils.forEach(floorplan.doors, function(door){
+		  position = new THREE.Vector3(
+			door.getCenterX(), door.getCenterY(), 64)
+		  var metadata = {
+			itemName: "Open Door",
+			//resizable: item.resizable,
+			itemType: 7,
+			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/174/open_door.js"
+		  }
+		  var scale = {
+			x: 1,
+			y: 1,
+			z: 1
+		  }
+		  scope.scene.addItem(
+			item.item_type,
+			item.model_url,
+			metadata,
+			position,
+			item.rotation,
+			scale,
+			false);
+
+		scope.sceneObj.addItem(
+			item.item_type,
+			item.model_url,
+			metadata,
+			position,
+			item.rotation,
+			scale,
+			false);
+		});
+		utils.forEach(floorplan.windows, function(window){
+		  position = new THREE.Vector3(
+			window.getCenterX(), window.getCenterY(), -105)
+		  var metadata = {
+			itemName: "Window",
+			//resizable: item.resizable,
+			itemType: 3,
+			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/165/whitewindow.js"
+		  }
+		  var scale = {
+			x: 1,
+			y: 1,
+			z: 1
+		  }
+		  scope.scene.addItem(
+			item.item_type,
+			item.model_url,
+			metadata,
+			position,
+			item.rotation,
+			scale,
+			false);
+
+		scope.sceneObj.addItem(
+			item.item_type,
+			item.model_url,
+			metadata,
+			position,
+			item.rotation,
+			scale,
+			false);
+		});
+
+
 		utils.forEach(items, function(item) {
 		  position = new THREE.Vector3(
 			item.xpos, item.ypos, item.zpos)
@@ -51037,7 +51079,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
   var scene = model.scene;
   var sceneObj = model.sceneObj;
-  var sceneObjFinal;
   var model = model;
   this.element = JQUERY(element);
   var domElement, hemiLight;
@@ -51059,6 +51100,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   var hasClicked = false;
 
   var hud;
+  var cameraObj, rendererObj;
 
   this.heightMargin;
   this.widthMargin;
@@ -51071,14 +51113,13 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   this.wallClicked = JQUERY.Callbacks(); // wall
   this.floorClicked = JQUERY.Callbacks(); // floor
   this.nothingClicked = JQUERY.Callbacks();
+  var one = true;
 
   function init() {
     THREE.ImageUtils.crossOrigin = "";
 
-    scope.resetSceneObjFinal();
     domElement = scope.element.get(0) // Container
     camera = new THREE.PerspectiveCamera(50, 1, 1, 10000);
-    //camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 10000 );
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       preserveDrawingBuffer: true // required to support .toDataURL()
@@ -51089,22 +51130,14 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     renderer.shadowMapType = THREE.PCFSoftShadowMap;
 
     scope.controls = new ThreeControls(camera, domElement);
-    //scope.controlsObj = new ThreeControls(cameraObj, domElement);
 
     hud = new ThreeHUD(scope);
 
     // setup camera nicely
     scope.centerCamera();
-    //scope.centerCameraObj();
-
-//    var lights = new ThreeLights(scene, model.floorplan);
+    floorplan = new ThreeFloorplan(scene, model.floorplan, scope.controls);
+    floorplan = new ThreeFloorplan(sceneObj, model.floorplan, scope.controls);
     var lights = new ThreeLights(sceneObj, model.floorplan);
-
-    floorplan = new ThreeFloorplan(sceneObj,
-      model.floorplan, scope.controls);
-
-    floorplan = new ThreeFloorplan(scene,
-      model.floorplan, scope.controls);
 
     // GROUND
 
@@ -51145,8 +51178,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     }).click(function() {
       hasClicked = true;
     });
-
-    //canvas = new ThreeCanvas(canvasElement, scope);
   }
 
   function spin() {
@@ -51166,39 +51197,11 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     hasClicked = true;
   }
 
-  this.resetSceneObjFinal = function(){
-    sceneObjFinal = null;
-  }
-
   this.exportObj = function(){
-    if ((sceneObjFinal==undefined) || (sceneObjFinal==null)){
-		var pan = model.floorplan.getCenter();
-		pan.y = 150;
-
-		//scope.controlsObj.target = pan;
-
-		var distance = model.floorplan.getSize().z * 2;
-
-		var offset = pan.clone().add(
-		  new THREE.Vector3(0, 100, 0));
-		//scope.controls.setOffset(offset);
-		var cameraObj = new THREE.PerspectiveCamera(45, 1, 1, 10000);
-		cameraObj.position.set(offset);
-
-		var rendererObj = new THREE.WebGLRenderer({
-		  antialias: true,
-		  preserveDrawingBuffer: true // required to support .toDataURL()
-		});
-		rendererObj.autoClear = false,
-		rendererObj.shadowMapEnabled = true;
-		rendererObj.shadowMapSoft = true;
-		rendererObj.shadowMapType = THREE.PCFSoftShadowMap;
-		rendererObj.clear();
-		rendererObj.render(sceneObj.getScene(), cameraObj);
-		rendererObj.clearDepth();
-		sceneObjFinal = rendererObj.export(sceneObj.getScene());
-	}
-    return sceneObjFinal;
+    //renderer.clear();
+    renderer.render(sceneObj.getScene(), camera);
+    //renderer.clearDepth();
+    return renderer.export(sceneObj.getScene());
   }
 
   this.options = function() {
@@ -51217,10 +51220,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     return controller;
   }
 
-  this.getSceneObj = function() {
-    return sceneObj;
-  }
-
   this.getFloorplan = function(){
     return floorplan;
   }
@@ -51235,12 +51234,11 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   }
   function shouldRender() {
     // Do we need to draw a new frame
-    if (scope.controls.needsUpdate || controller.needsUpdate || needsUpdate || model.scene.needsUpdate  || model.sceneObj.needsUpdate ) {
+    if (scope.controls.needsUpdate || controller.needsUpdate || needsUpdate || model.scene.needsUpdate ) {
       scope.controls.needsUpdate = false;
       controller.needsUpdate = false;
       needsUpdate = false;
       model.scene.needsUpdate = false;
-      //model.sceneObj.needsUpdate = false;
       return true;
     } else {
       return false;
@@ -51314,23 +51312,6 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     scope.controls.update();
   }
 
-  this.centerCameraObj = function() {
-        var yOffset = 150.0;
-
-    var pan = model.floorplan.getCenter();
-    pan.y = yOffset;
-
-    //scope.controlsObj.target = pan;
-
-    var distance = model.floorplan.getSize().z * 2;
-
-    var offset = pan.clone().add(
-      new THREE.Vector3(0, 100, 0));
-    //scope.controls.setOffset(offset);
-    cameraObj.position.set(offset);
-    scope.controlsObj.update();
-  }
-
   // projects the object's center point into x,y screen coords
   // x,y are relative to top left corner of viewer
   this.projectVector = function(vec3, ignoreMargin) {
@@ -51400,7 +51381,6 @@ ThreeSkybox = function(scene) {
   ].join('\n');
 
   function init() {
-
     scene.fog = new THREE.Fog( 0xffffff, 1, 5000 );
 	scene.fog.color.setHSL( 0.6, 0, 1 );
     // LIGHTS
