@@ -45960,11 +45960,11 @@ global.Blueprint3d = function(opts) {
 		var offsetY = calculateGridOffset(-viewmodel.originY);
 		var width = canvasElement.width;
 		var height = canvasElement.height;
-		for (var x=0; x <= (width / gridSpacing); x++) {
-		  drawLine(gridSpacing * x + offsetX, 0, gridSpacing*x + offsetX, height, gridWidth, gridColor);
+		for (var x=-2*(width / gridSpacing); x <= 4*(width / gridSpacing); x++) {
+		  drawLine(gridSpacing * x + offsetX, -2*height, gridSpacing*x + offsetX, 4*height, gridWidth, gridColor);
 		}
-		for (var y=0; y <= (height / gridSpacing); y++) {
-		  drawLine(0, gridSpacing*y + offsetY, width, gridSpacing*y + offsetY, gridWidth, gridColor);
+		for (var y=-2*(height / gridSpacing); y <= 4*(height / gridSpacing); y++) {
+		  drawLine(-2*width, gridSpacing*y + offsetY, 4*width, gridSpacing*y + offsetY, gridWidth, gridColor);
 		}
 	  }
 
