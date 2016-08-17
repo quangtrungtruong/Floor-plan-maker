@@ -45037,12 +45037,12 @@ global.Blueprint3d = function(opts) {
 
 		if ((hoverDoor!=null) || (hoverWindow!=null)){
 		    hoverRoom = null;
+		    if (hoverRoom != scope.activeRoom){
+			  scope.activeRoom = hoverRoom;
+			  draw = true;
+			}
 		  }
 
-		if (hoverRoom != scope.activeRoom){
-		  scope.activeRoom = hoverRoom;
-		  draw = true;
-		}
 
 		// delete
 		if (scope.mode == scope.modes.DELETE) {
@@ -45171,8 +45171,6 @@ global.Blueprint3d = function(opts) {
 			}
 
 			for (var i=0; i<floorplan.getWindows().length; i++){
-			  var id = floorplan.getWindows()[i].getClosestWallWindow();
-			  var lcors = floorplan.getWalls();
 			  if (floorplan.getWindows()[i].getClosestWallWindow()==scope.activeWall.id)
 				floorplan.getWindows()[i].relativeMove(
 				  (rawMouseX - lastX) * cmPerPixel,
@@ -45545,7 +45543,7 @@ global.Blueprint3d = function(opts) {
 	  var roomColorHover = "#31B404";
 
 	  var windowColor = "#4000FF";
-	  var doorColor = "#FF00FF";
+	  var doorColor = "#240B3B";
 	  var windowColorHover = "#5D6D7E";
 
 	  // wall config
