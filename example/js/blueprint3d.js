@@ -45043,7 +45043,6 @@ global.Blueprint3d = function(opts) {
 			}
 		  }
 
-
 		// delete
 		if (scope.mode == scope.modes.DELETE) {
 		  if (scope.activeCorner) {
@@ -50665,7 +50664,7 @@ module.exports = ThreeEdge;
 var THREE = require('three')
 var utils = require('../utils/utils')
 
-var ThreeFloor = function(scene, room) {
+var ThreeFloor = function(scene, room, door, window, item) {
 
   var scope = this;
 
@@ -50783,6 +50782,8 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 
   this.floors = [];
   this.edges = [];
+  this.windows = [];
+  this.doors = [];
 
   floorplan.fireOnUpdatedRooms(redraw);
 
@@ -50796,12 +50797,22 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     scope.floors = [];
     scope.edges = [];
+    scope.windows = [];
+    scope.doors = [];
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
       var threeFloor = new ThreeFloor(scene, room);
       scope.floors.push(threeFloor);
       threeFloor.addToScene();
+    });
+
+    // draw windows and doors
+    utils.forEach(scope.floorplan.getWindows(), function(window){
+      scope.windows.push(window);
+    });
+    utils.forEach(scope.floorplan.getDoors(), function(door){
+      scope.doors.push(door);
     });
 
     // draw edges
@@ -51099,7 +51110,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
   this.controls;
   var canvas;
   var controller;
-  var floorplan;
+  var floorplan, floorplanObj;
 
   //var canvas;
   //var canvasElement = canvasElement;
@@ -51147,7 +51158,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     // setup camera nicely
     scope.centerCamera();
     floorplan = new ThreeFloorplan(scene, model.floorplan, scope.controls);
-    floorplan = new ThreeFloorplan(sceneObj, model.floorplan, scope.controls);
+    floorplanObj = new ThreeFloorplan(sceneObj, model.floorplan, scope.controls);
     var lights = new ThreeLights(sceneObj, model.floorplan);
 
     // GROUND
