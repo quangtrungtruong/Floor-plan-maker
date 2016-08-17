@@ -45836,15 +45836,28 @@ global.Blueprint3d = function(opts) {
 		context.lineTo(viewmodel.convertX(door.getCenterX()), viewmodel.convertY(door.getCenterY())-door.width/2);
 		context.stroke();*/
 
-	var angle = utils.angle2pi(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), viewmodel.convertX(door.getEndX()), viewmodel.convertY(door.getEndY()));
-		var real = angle*Math.PI;
+	    var closestWall;
+	    utils.forEach(floorplan.getWalls(), function(wall){
+	      if (wall.id == door.getClosestWallDoor()){
+	        closestWall = wall;
+	      }
+	    });
+	    /*var angle = utils.angle2pi(door.getStartX()-door.getEndX(), door.getStartY()-door.getEndY()
+	    , closestWall.getStartX()-closestWall.getEndX(), closestWall.getStartY()-closestWall.getEndY());*/
+	    var angle = utils.angle2pi(door.getStartX()-door.getEndX(), door.getStartY()-door.getEndY(), -1, 0);
+		var real = angle/Math.PI*180;
 		var ss1 = real * 180;
 		var pi = Math.PI;
 		var ss = angle / Math.PI * 180;
 		context.beginPath();
-		context.arc(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), door.width/2, angle + 1.5 * Math.PI, angle);
-		//context.moveTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()));
-		//context.lineTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getCenterY())-door.width/2);
+		context.arc(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), door.width/2, angle, 1/2*Math.PI + angle);
+		context.moveTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()));
+		var ss4 = Math.cos(angle);
+		var ss1 = (door.width/2)*Math.cos(angle);
+		var ss3 = viewmodel.convertY(door.getCenterY())+(door.width/2)*Math.cos(angle);
+		var ss2 = Math.sin(angle);
+		context.lineTo(viewmodel.convertX(door.getStartX())-(door.width/2)*Math.sin(angle),
+		viewmodel.convertY(door.getStartY())+(door.width/2)*Math.cos(angle));
 		context.stroke();
 	  }
 
