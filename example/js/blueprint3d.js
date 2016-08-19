@@ -48444,7 +48444,7 @@ var JQUERY = require('jquery');
 		this.floorplan.loadFloorplan(floorplan);
 
 		// add doors and windows
-		utils.forEach(floorplan.doors, function(door){
+		/*utils.forEach(floorplan.doors, function(door){
 		  position = new THREE.Vector3(
 			door.getCenterX(), door.getCenterY(), 64)
 		  var metadata = {
@@ -48507,7 +48507,7 @@ var JQUERY = require('jquery');
 			item.rotation,
 			scale,
 			false);
-		});
+		});*/
 
 
 		utils.forEach(items, function(item) {
@@ -50812,7 +50812,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
       position = new THREE.Vector3(
-			window.getCenterX(), window.getCenterY(), 100);
+			window.getCenterX(), window.getCenterY(), 10);
 
 	  //position = new THREE.Vector3(1001.0862865204286,31.15939942141,86.4297300551338);
 		  var metadata = {

@@ -10,7 +10,7 @@ var ThreeEdge = function(scene, edge, controls) {
   var front = edge.front;
 
   var planes = [];
-  var basePlanes = []; // always visible
+  var basePlanes = []; // always visiblebd
   var texture = null;
   
   var lightMap = THREE.ImageUtils.loadTexture("rooms/textures/walllightmap.png");
