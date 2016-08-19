@@ -48478,7 +48478,7 @@ var JQUERY = require('jquery');
 		});
 		utils.forEach(floorplan.windows, function(window){
 		  position = new THREE.Vector3(
-			window.getCenterX(), window.getCenterY(), -105)
+			window.getCenterX(), window.getCenterY(), 105)
 		  var metadata = {
 			itemName: "Window",
 			//resizable: item.resizable,
@@ -50799,6 +50799,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     scope.edges = [];
     scope.windows = [];
     scope.doors = [];
+    //scope.scene.clearItems();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -50810,9 +50811,53 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     // draw windows and doors
     utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
+      position = new THREE.Vector3(
+			window.getCenterX(), window.getCenterY(), 100);
+
+	  //position = new THREE.Vector3(1001.0862865204286,31.15939942141,86.4297300551338);
+		  var metadata = {
+			itemName: "Window",
+			//resizable: item.resizable,
+			itemType: 3,
+			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/165/whitewindow.js"
+		  }
+		  var scale = {
+			x: 1,
+			y: 1,
+			z: 1
+		  }
+		  scope.scene.addItem(
+			metadata.itemType,
+			metadata.modelUrl,
+			metadata,
+			position,
+			-1.5707963267948966,
+			scale,
+			false);
     });
     utils.forEach(scope.floorplan.getDoors(), function(door){
       scope.doors.push(door);
+      position = new THREE.Vector3(
+			door.getCenterX(), door.getCenterY(), 80)
+		  var metadata = {
+			itemName: "Open Door",
+			//resizable: item.resizable,
+			itemType: 7,
+			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/174/open_door.js"
+		  }
+		  var scale = {
+			x: 1,
+			y: 1,
+			z: 1
+		  }
+		  scope.scene.addItem(
+			metadata.itemType,
+			metadata.modelUrl,
+			metadata,
+			position,
+			-1.5707963267948966,
+			scale,
+			false);
     });
 
     // draw edges
