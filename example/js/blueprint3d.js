@@ -50799,7 +50799,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     scope.edges = [];
     scope.windows = [];
     scope.doors = [];
-    //scope.scene.clearItems();
+    scope.scene.clearItems();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -50809,7 +50809,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
 
     // draw windows and doors
-    utils.forEach(scope.floorplan.getWindows(), function(window){
+    /*utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
       position = new THREE.Vector3(
 			window.getCenterX(), window.getCenterY(), 10);
@@ -50858,7 +50858,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 			-1.5707963267948966,
 			scale,
 			false);
-    });
+    });*/
 
     // draw edges
     utils.forEach(scope.floorplan.wallEdges(), function(edge) {
