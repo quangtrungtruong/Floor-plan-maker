@@ -45542,7 +45542,7 @@ global.Blueprint3d = function(opts) {
 	  var roomColorHover = "#31B404";
 
 	  var windowColor = "#4000FF";
-	  var doorColor = "#240B3B";
+	  var doorColor = "#29088A";
 	  var windowColorHover = "#5D6D7E";
 
 	  // wall config
@@ -45817,7 +45817,13 @@ global.Blueprint3d = function(opts) {
 		  color = roomColorHover;
 		}
 
-		drawLine(
+	    var closestWall;
+	    utils.forEach(floorplan.getWalls(), function(wall){
+	      if (wall.id == door.getClosestWallDoor()){
+	        closestWall = wall;
+	      }
+	    });
+	    drawLine(
 		  viewmodel.convertX(door.getStartX()),
 		  viewmodel.convertY(door.getStartY()),
 		  viewmodel.convertX(door.getEndX()),
@@ -45825,36 +45831,13 @@ global.Blueprint3d = function(opts) {
 		  hover ? door.thickness*1.1 : door.thickness,
 		  color
 		);
-		/*context.beginPath();
-		context.arc(viewmodel.convertX(door.getCenterX())-door.width/2, viewmodel.convertY(door.getCenterY())-door.width/2, door.width/2, 1.5 * Math.PI, 0);
-		context.moveTo(viewmodel.convertX(door.getCenterX())-door.width/2, viewmodel.convertY(door.getCenterY())-door.width/2);
-		context.lineTo(viewmodel.convertX(door.getCenterX())-door.width/2, viewmodel.convertY(door.getCenterY()-door.width)-door.width/2);
-		context.moveTo(viewmodel.convertX(door.getCenterX())-door.width/2, viewmodel.convertY(door.getCenterY())-door.width/2);
-		context.lineTo(viewmodel.convertX(door.getCenterX()), viewmodel.convertY(door.getCenterY())-door.width/2);
-		context.stroke();*/
-
-	    var closestWall;
-	    utils.forEach(floorplan.getWalls(), function(wall){
-	      if (wall.id == door.getClosestWallDoor()){
-	        closestWall = wall;
-	      }
-	    });
-	    /*var angle = utils.angle2pi(door.getStartX()-door.getEndX(), door.getStartY()-door.getEndY()
-	    , closestWall.getStartX()-closestWall.getEndX(), closestWall.getStartY()-closestWall.getEndY());*/
 	    var angle = utils.angle2pi(door.getStartX()-door.getEndX(), door.getStartY()-door.getEndY(), -1, 0);
-		var real = angle/Math.PI*180;
-		var ss1 = real * 180;
-		var pi = Math.PI;
-		var ss = angle / Math.PI * 180;
 		context.beginPath();
 		context.arc(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()), door.width/2, angle, 1/2*Math.PI + angle);
 		context.moveTo(viewmodel.convertX(door.getStartX()), viewmodel.convertY(door.getStartY()));
-		var ss4 = Math.cos(angle);
-		var ss1 = (door.width/2)*Math.cos(angle);
-		var ss3 = viewmodel.convertY(door.getCenterY())+(door.width/2)*Math.cos(angle);
-		var ss2 = Math.sin(angle);
 		context.lineTo(viewmodel.convertX(door.getStartX())-(door.width/2)*Math.sin(angle),
 		viewmodel.convertY(door.getStartY())+(door.width/2)*Math.cos(angle));
+		context.lineWidth = 1;
 		context.stroke();
 	  }
 
@@ -46881,7 +46864,7 @@ var JQUERY = require('jquery');
 
 	  this.thickness = 10;
 	  this.height = 170;
-	  this.width = 100;
+	  this.width = 90;
 	  this.tolerance = 40;
 
 	  var centerX = x;
@@ -48963,6 +48946,8 @@ var Scene = function(model, textureDir) {
       loaderCallback,
       textureDir
     );
+
+    return item;
   }
 }
 
@@ -50784,6 +50769,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
   this.edges = [];
   this.windows = [];
   this.doors = [];
+  this.items = [];
 
   floorplan.fireOnUpdatedRooms(redraw);
 
@@ -50797,9 +50783,8 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     scope.floors = [];
     scope.edges = [];
-    scope.windows = [];
-    scope.doors = [];
-    scope.scene.clearItems();
+
+    //scope.scene.clearItems();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -50810,6 +50795,9 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 
     // draw windows and doors
     utils.forEach(scope.floorplan.getWindows(), function(window){
+      
+    });
+    utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
       position = new THREE.Vector3(window.getCenterX(), 110, window.getCenterY());
 
@@ -50819,11 +50807,12 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 			itemName: "Window",
 			//resizable: item.resizable,
 			itemType: 3,
-			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/165/whitewindow.js"
+			//modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/165/whitewindow.js"
+			modelUrl: "./metadata/white_window.js"
 		  }
 		  var scale = {
-			x: 1,
-			y: 1,
+			x: 0.7,
+			y: 0.7,
 			z: 1
 		  }
 		  scope.scene.addItem(
@@ -50837,19 +50826,20 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     utils.forEach(scope.floorplan.getDoors(), function(door){
       scope.doors.push(door);
-      position = new THREE.Vector3(door.getCenterX(), 110, door.getCenterY());
+      position = new THREE.Vector3(door.getCenterX(), 100, door.getCenterY());
       //position = new THREE.Vector3(48.832000000000164,120,-846.3919999999999);
 
 		  var metadata = {
-			itemName: "Open Door",
+			itemName: "Closed Door",
 			//resizable: item.resizable,
 			itemType: 7,
-			modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/174/open_door.js"
+			//modelUrl: "https://blueprint-dev.s3.amazonaws.com/uploads/item_model/model/617/closed-door28x80_baked.js"
+			modelUrl: "./metadata/closed_door.js"
 		  }
 		  var scale = {
-			x: 1,
-			y: 1,
-			z: 1
+			x:0.9,
+			y:0.9,
+			z:1
 		  }
 		  scope.scene.addItem(
 			metadata.itemType,
