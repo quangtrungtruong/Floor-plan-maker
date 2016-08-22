@@ -50809,12 +50809,12 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
 
     // draw windows and doors
-    /*utils.forEach(scope.floorplan.getWindows(), function(window){
+    utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
-      position = new THREE.Vector3(
-			window.getCenterX(), window.getCenterY(), 10);
+      position = new THREE.Vector3(window.getCenterX(), 110, window.getCenterY());
 
-	  //position = new THREE.Vector3(1001.0862865204286,31.15939942141,86.4297300551338);
+	  //position = new THREE.Vector3(-703.136,120,-846.3919999999999);
+
 		  var metadata = {
 			itemName: "Window",
 			//resizable: item.resizable,
@@ -50837,8 +50837,9 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     utils.forEach(scope.floorplan.getDoors(), function(door){
       scope.doors.push(door);
-      position = new THREE.Vector3(
-			door.getCenterX(), door.getCenterY(), 80)
+      position = new THREE.Vector3(door.getCenterX(), 110, door.getCenterY());
+      //position = new THREE.Vector3(48.832000000000164,120,-846.3919999999999);
+
 		  var metadata = {
 			itemName: "Open Door",
 			//resizable: item.resizable,
@@ -50858,7 +50859,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 			-1.5707963267948966,
 			scale,
 			false);
-    });*/
+    });
 
     // draw edges
     utils.forEach(scope.floorplan.wallEdges(), function(edge) {
