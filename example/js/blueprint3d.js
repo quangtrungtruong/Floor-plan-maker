@@ -48926,8 +48926,10 @@ var Scene = function(model, textureDir) {
   this.addItem = function(itemType, fileName, metadata, position, rotation, scale, fixed) {
     itemType = itemType || 1;
 
+    var item;
+
     var loaderCallback = function(geometry, materials) {
-      var item = new item_types[itemType](
+      item = new item_types[itemType](
         model,
         metadata, geometry,
         new THREE.MeshFaceMaterial(materials),
@@ -50784,7 +50786,7 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     scope.floors = [];
     scope.edges = [];
 
-    //scope.scene.clearItems();
+    scope.scene.clearItems();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -50794,9 +50796,6 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
 
     // draw windows and doors
-    utils.forEach(scope.floorplan.getWindows(), function(window){
-      
-    });
     utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
       position = new THREE.Vector3(window.getCenterX(), 110, window.getCenterY());
