@@ -45349,6 +45349,8 @@ global.Blueprint3d = function(opts) {
 
 		// drawing
 		// consider: draw a linne and it cuts many other lines will create many intersection corners
+		var s = floorplan.getWalls();
+		var s1 = floorplan.getCorners();
 		if (scope.mode == scope.modes.DRAW && !mouseMoved) {
 		  var corner = floorplan.newCorner(scope.targetX, scope.targetY);
 		  if (scope.lastNode != null) {
@@ -45414,9 +45416,9 @@ global.Blueprint3d = function(opts) {
 		}
 		mouseClick = true;
 
-		/*
+
 		// merger corners having the same position
-		corners = floorplan.getCorners();
+		/*corners = floorplan.getCorners();
 		for (var i=0; i<corners.length; i++){
 		  for (var j=(i+1); j<corners.length; j++){
 		    if (utils.distance(corners[i].x, corners[i].y, corners[j].x, corners[j].y)==0){
@@ -45440,9 +45442,9 @@ global.Blueprint3d = function(opts) {
 		      });
 		    }
 		  }
-		}
+		}*/
         // split wall into 2 walls in case there is a corner between this wall
-        var walls = floorplan.getWalls();
+        /*var walls = floorplan.getWalls();
 	  	utils.forEach(walls, function(wall){
 		  utils.forEach(corners, function(corner){
 		    if ((corner!=wall.getStart()) && (corner!=wall.getEnd()) &&
@@ -46835,12 +46837,22 @@ var JQUERY = require('jquery');
 		this.y = corner.y;
 		// absorb the other corner's wallStarts and wallEnds
 		for( var i = corner.wallStarts.length - 1; i >= 0; i-- ) {
-		  floorplan.newWall(this, corner.wallStarts[i].getEnd());
-		  corner.wallStarts[i].end.detachWall(corner.wallStarts[i]);
+		  var wall = corner.wallStarts[i];
+		  var endCorner = corner.wallStarts[i].getEnd();
+		  corner.wallStarts[i].getEnd().detachWall(corner.wallStarts[i]);
+		  corner.wallStarts[i].getStart().detachWall(corner.wallStarts[i]);
+		  floorplan.removeWall(wall);
+		  wall.remove();
+		  floorplan.newWall(this, endCorner);
 		}
 		for( var i = corner.wallEnds.length - 1; i >= 0; i-- ) {
-		  floorplan.newWall(corner.wallEnds[i].getStart(), this);
-		  corner.wallStarts[i].end.detachWall(corner.wallStarts[i]);
+		  var wall = corner.wallEnds[i];
+		  var startCorner = corner.wallEnds[i].getStart();
+		  corner.wallEnds[i].getStart().detachWall(corner.wallEnds[i]);
+		  corner.wallEnds[i].getEnd().detachWall(corner.wallEnds[i]);
+		  floorplan.removeWall(wall);
+		  wall.remove();
+		  floorplan.newWall(startCorner, this);
 		}
 		// delete the other corner
 		corner.removeAll();
@@ -46857,7 +46869,6 @@ var JQUERY = require('jquery');
 		  if (this.distanceFromCorner(obj) < tolerance && obj != this) {
 			this.combineWithCorner(obj);
 			//floorplan.removeCorner(i);
-			var c1 = floorplan.getCorners();
 			return true;
 		  }
 		}
@@ -46877,7 +46888,6 @@ var JQUERY = require('jquery');
 			obj.setEnd(this);
 			obj.end = this;
 			floorplan.update();
-			var c1 = floorplan.getCorners().length
 			return true;
 		  }
 		}
