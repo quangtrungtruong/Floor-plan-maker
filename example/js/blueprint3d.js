@@ -50849,10 +50849,6 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     scope.floors = [];
     scope.edges = [];
-    scope.doors = [];
-    scope.windows = [];
-
-    scope.redrawItem();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -51310,7 +51306,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
     if (options.spin && !mouseOver && !hasClicked) {
       var theta = 2 * Math.PI * options.spinSpeed * (Date.now() - lastRender);
       scope.controls.rotateLeft(theta);
-      scope.controls.update()
+      scope.controls.update();
     }
   }
 
@@ -51321,6 +51317,7 @@ var ThreeMain = function(model, element, canvasElement, opts) {
 
   this.stopSpin = function() {
     hasClicked = true;
+    floorplan.redrawItem();
   }
 
   this.exportObj = function(){
