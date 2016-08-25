@@ -45414,6 +45414,7 @@ global.Blueprint3d = function(opts) {
 		}
 		mouseClick = true;
 
+		/*
 		// merger corners having the same position
 		corners = floorplan.getCorners();
 		for (var i=0; i<corners.length; i++){
@@ -45475,7 +45476,7 @@ global.Blueprint3d = function(opts) {
 		    }
 		  });
 		  floorplan.update();
-		});
+		});*/
 
 		// merge corner
 		for (var i=0; floorplan.corners && (i<floorplan.corners.length); i++)
