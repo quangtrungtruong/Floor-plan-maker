@@ -45010,10 +45010,6 @@ global.Blueprint3d = function(opts) {
 	    return floorplan;
 	  }
 
-	  this.callUpdateTarget = function(){
-	    updateTarget();
-	  }
-
 	  this.setRoomThickness = function(thickness){
 		floorplan.setRoomThickness(thickness);
 	  }
@@ -45418,35 +45414,37 @@ global.Blueprint3d = function(opts) {
 		corners = floorplan.getCorners();
 		for (var i=0; i<corners.length; i++){
 		  for (var j=(i+1); j<corners.length; j++){
-		    if (utils.distance(corners[i].x, corners[i].y, corners[j].x, corners[j].y)==0){
-		      utils.forEach(corners[j].wallStarts, function(wall){
-		        var endCorner = wall.getEnd();
-		        endCorner.detachWall(wall);
-		        corners[j].detachWall(wall);
-		        floorplan.removeWall(wall);
-		        wall.remove();
-		        floorplan.newWall(corners[i], endCorner);
-		        //floorplan.walls.push(newWall);
-		      });
-		      utils.forEach(corners[j].wallEnds, function(wall){
-		        var startCorner = wall.getStart();
-		        startCorner.detachWall(wall);
-		        corners[j].detachWall(wall);
-		        floorplan.removeWall(wall);
-		        wall.remove();
-		        floorplan.newWall(startCorner, corners[i]);
-		        //floorplan.walls.push(newWall);
-		      });
-		    }
+			if (utils.distance(corners[i].x, corners[i].y, corners[j].x, corners[j].y)<0.1*toleranceRoom){
+			  utils.forEach(corners[j].wallStarts, function(wall){
+				var endCorner = wall.getEnd();
+				endCorner.detachWall(wall);
+				corners[j].detachWall(wall);
+				floorplan.removeWall(wall);
+				wall.remove();
+				floorplan.newWall(corners[i], endCorner);
+				//floorplan.walls.push(newWall);
+			  });
+			  utils.forEach(corners[j].wallEnds, function(wall){
+				var startCorner = wall.getStart();
+				startCorner.detachWall(wall);
+				corners[j].detachWall(wall);
+				floorplan.removeWall(wall);
+				wall.remove();
+				floorplan.newWall(startCorner, corners[i]);
+				//floorplan.walls.push(newWall);
+			  });
+			}
 		  }
 		}
-        // split wall into 2 walls in case there is a corner between this wall
-        var walls = floorplan.getWalls();
-	  	utils.forEach(walls, function(wall){
+		// split wall into 2 walls in case there is a corner between this wall
+		var walls = floorplan.getWalls();
+		var cc = floorplan.getCorners();
+		utils.forEach(walls, function(wall){
 		  utils.forEach(corners, function(corner){
-		    if ((corner!=wall.getStart()) && (corner!=wall.getEnd()) &&
-		    ((utils.distance(corner.x, corner.y, wall.getStart().x, wall.getStart().y)+utils.distance(corner.x, corner.y, wall.getEnd().x, wall.getEnd().y))==
-		    utils.distance(wall.getStart().x, wall.getStart().y, wall.getEnd().x, wall.getEnd().y))){
+			var ccd = floorplan.getCorners();
+			if ((corner!=wall.getStart()) && (corner!=wall.getEnd()) &&
+			(Math.abs(utils.distance(corner.x, corner.y, wall.getStart().x, wall.getStart().y)+utils.distance(corner.x, corner.y, wall.getEnd().x, wall.getEnd().y)-
+			utils.distance(wall.getStart().x, wall.getStart().y, wall.getEnd().x, wall.getEnd().y))<0.1*toleranceRoom)){
 			  var startCorner = wall.getStart();
 			  var endCorner = wall.getEnd();
 			  startCorner.detachWall(wall);
@@ -45456,42 +45454,40 @@ global.Blueprint3d = function(opts) {
 			  // check wall is existed?
 			  var flag = false;
 			  utils.forEach(walls, function(wall1){
-			    if ((floorplan.isSamePositionTwoCorners(wall1.getStart, startCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
-			    (floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),startCorner)))){
-			      flag = true;
-			    }
+				if ((floorplan.isSamePositionTwoCorners(wall1.getStart, startCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
+				(floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),startCorner)))){
+				  flag = true;
+				}
 			  });
 			  if (flag==false)
-			    floorplan.newWall(startCorner, corner);
-			    flag = true;
+				floorplan.newWall(startCorner, corner);
+				flag = true;
 			  utils.forEach(walls, function(wall1){
-			    if ((floorplan.isSamePositionTwoCorners(wall1.getStart, endCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
-			    (floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),endCorner)))){
-			       flag = true;
-			    }
+				if ((floorplan.isSamePositionTwoCorners(wall1.getStart, endCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
+				(floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),endCorner)))){
+				   flag = true;
+				}
 			  });
 			  if (flag==false)
-			    floorplan.newWall(corner, endCorner);
-		    }
+				floorplan.newWall(corner, endCorner);
+			}
 		  });
-		  floorplan.update();
 		});
 
-		// merge corner
-		for (var i=0; floorplan.corners && (i<floorplan.corners.length); i++)
-		  floorplan.corners[i].mergeWithIntersected();
-		    if (!mouseMoved){
-		      if (hoverDoor)
-				scope.selectItem(hoverDoor, "door");
-				  else if (hoverWindow)
-					scope.selectItem(hoverWindow, "window");
-					else if (hoverWall)
-					  scope.selectItem(hoverWall, "wall");
-					  else if (hoverRoom)
-						scope.selectItem(hoverRoom, "room");
-						  else scope.selectItem(null, null);
-			}
+		if (!mouseMoved){
+		  if (hoverDoor)
+			scope.selectItem(hoverDoor, "door");
+			  else if (hoverWindow)
+				scope.selectItem(hoverWindow, "window");
+				else if (hoverWall)
+				  scope.selectItem(hoverWall, "wall");
+				  else if (hoverRoom)
+					scope.selectItem(hoverRoom, "room");
+					  else scope.selectItem(null, null);
+		}
+
 		floorplan.update();
+		updateTarget();
 	  }
 
 	  this.addCornerInWall = function(hoverWall, mouseX, mouseY){
