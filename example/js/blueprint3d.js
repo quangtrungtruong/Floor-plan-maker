@@ -51996,7 +51996,7 @@ var utils = {};
 
         var commands = [],
           index = -1,
-            limit = 0,
+            limit = 3,
             isExecuting = false,
             callback,
 
