@@ -756,7 +756,6 @@ $(document).ready(function() {
     widget: false
   }
   var blueprint3d = new Blueprint3d(opts);
-
   var modalEffects = new ModalEffects(blueprint3d);
   var viewerFloorplanner = new ViewerFloorplanner(blueprint3d);
   var contextMenu = new ContextMenu(blueprint3d);

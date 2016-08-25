@@ -45000,7 +45000,7 @@ global.Blueprint3d = function(opts) {
 		  scope.yArr.push(scope.targetY);
 		}
 
-		for (var i=0; i< floorplan.getCorners().length; i++)
+		for (var i=0; (floorplan.getCorners()!=undefined) && (i< floorplan.getCorners().length); i++)
 			floorplan.getCorners()[i].removeDuplicateWalls();
 
 		view.draw(scope.unit);
@@ -45414,6 +45414,69 @@ global.Blueprint3d = function(opts) {
 		}
 		mouseClick = true;
 
+		// merger corners having the same position
+		corners = floorplan.getCorners();
+		for (var i=0; i<corners.length; i++){
+		  for (var j=(i+1); j<corners.length; j++){
+		    if (utils.distance(corners[i].x, corners[i].y, corners[j].x, corners[j].y)==0){
+		      utils.forEach(corners[j].wallStarts, function(wall){
+		        var endCorner = wall.getEnd();
+		        endCorner.detachWall(wall);
+		        corners[j].detachWall(wall);
+		        floorplan.removeWall(wall);
+		        wall.remove();
+		        floorplan.newWall(corners[i], endCorner);
+		        //floorplan.walls.push(newWall);
+		      });
+		      utils.forEach(corners[j].wallEnds, function(wall){
+		        var startCorner = wall.getStart();
+		        startCorner.detachWall(wall);
+		        corners[j].detachWall(wall);
+		        floorplan.removeWall(wall);
+		        wall.remove();
+		        floorplan.newWall(startCorner, corners[i]);
+		        //floorplan.walls.push(newWall);
+		      });
+		    }
+		  }
+		}
+        // split wall into 2 walls in case there is a corner between this wall
+        var walls = floorplan.getWalls();
+	  	utils.forEach(walls, function(wall){
+		  utils.forEach(corners, function(corner){
+		    if ((corner!=wall.getStart()) && (corner!=wall.getEnd()) &&
+		    ((utils.distance(corner.x, corner.y, wall.getStart().x, wall.getStart().y)+utils.distance(corner.x, corner.y, wall.getEnd().x, wall.getEnd().y))==
+		    utils.distance(wall.getStart().x, wall.getStart().y, wall.getEnd().x, wall.getEnd().y))){
+			  var startCorner = wall.getStart();
+			  var endCorner = wall.getEnd();
+			  startCorner.detachWall(wall);
+			  endCorner.detachWall(wall);
+			  wall.remove(wall);
+
+			  // check wall is existed?
+			  var flag = false;
+			  utils.forEach(walls, function(wall1){
+			    if ((floorplan.isSamePositionTwoCorners(wall1.getStart, startCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
+			    (floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),startCorner)))){
+			      flag = true;
+			    }
+			  });
+			  if (flag==false)
+			    floorplan.newWall(startCorner, corner);
+			    flag = true;
+			  utils.forEach(walls, function(wall1){
+			    if ((floorplan.isSamePositionTwoCorners(wall1.getStart, endCorner) && (floorplan.isSamePositionTwoCorners(wall1.getEnd(), corner))) ||
+			    (floorplan.isSamePositionTwoCorners(wall1.getStart,corner)&& (floorplan.isSamePositionTwoCorners(wall1.getEnd(),endCorner)))){
+			       flag = true;
+			    }
+			  });
+			  if (flag==false)
+			    floorplan.newWall(corner, endCorner);
+		    }
+		  });
+		  floorplan.update();
+		});
+
 		// merge corner
 		for (var i=0; floorplan.corners && (i<floorplan.corners.length); i++)
 		  floorplan.corners[i].mergeWithIntersected();
@@ -45428,6 +45491,7 @@ global.Blueprint3d = function(opts) {
 						scope.selectItem(hoverRoom, "room");
 						  else scope.selectItem(null, null);
 			}
+		floorplan.update();
 	  }
 
 	  this.addCornerInWall = function(hoverWall, mouseX, mouseY){
@@ -47179,11 +47243,20 @@ var JQUERY = require('jquery');
 		updated_rooms.add(callback);
 	  }
 
+	  this.isSamePositionTwoCorners = function(corner1, corner2){
+	    if ((corner1.x==corner2.x) && (corner1.y==corner2.y)){
+	      return true;
+	    }
+	    else
+	    return false;
+	  }
+
 	  this.newWall = function(start, end, isServingForRoom) {
 		var wall = new Wall(start, end);
 		walls.push(wall)
 		wall.fireOnDelete(removeWall);
 		new_wall_callbacks.fire(wall);
+		scope.update();
 		if ((isServingForRoom==undefined) || (isServingForRoom==false)){
 			// add redo and undo function
 			undoManager.add({
@@ -47210,7 +47283,6 @@ var JQUERY = require('jquery');
 				}
 			});
 		}
-		scope.update();
 		return wall;
 	  }
 
@@ -47833,14 +47905,6 @@ var JQUERY = require('jquery');
 		utils.forEach(walls, function(wall) {
 		  wall.resetFrontBack();
 		});
-
-		/*// merger corners having the same position
-		for (var i=0; i<corners.length(); i++){
-		  for (var j=(i+1); j<corners.length(); j++)
-		    if (utils.distance(corners[i].x, corners[i].y, corners[j].x, corners[j].y])==0){
-
-		    }
-		}*/
 
 		var roomCorners = findRooms(corners);
 		var lastRooms = rooms;
@@ -50766,12 +50830,11 @@ ThreeFloorplan = function(scene, floorplan, controls) {
   this.scene = scene;
   this.floorplan = floorplan;
   this.controls = controls;
-
   this.floors = [];
   this.edges = [];
-  this.windows = [];
   this.doors = [];
-  this.items = [];
+  this.windows = [];
+  this.metadata = [];
 
   floorplan.fireOnUpdatedRooms(redraw);
 
@@ -50785,8 +50848,10 @@ ThreeFloorplan = function(scene, floorplan, controls) {
     });
     scope.floors = [];
     scope.edges = [];
+    scope.doors = [];
+    scope.windows = [];
 
-    scope.scene.clearItems();
+    scope.redrawItem();
 
     // draw floors
     utils.forEach(scope.floorplan.getRooms(), function(room) {
@@ -50795,7 +50860,17 @@ ThreeFloorplan = function(scene, floorplan, controls) {
       threeFloor.addToScene();
     });
 
-    // draw windows and doors
+    // draw edges
+    utils.forEach(scope.floorplan.wallEdges(), function(edge) {
+      var threeEdge = new ThreeEdge(
+        scene, edge, scope.controls);
+      scope.edges.push(threeEdge);
+    });
+  }
+
+   this.redrawItem = function(){
+     scope.scene.clearItems();
+     // draw windows and doors
     utils.forEach(scope.floorplan.getWindows(), function(window){
       scope.windows.push(window);
       position = new THREE.Vector3(window.getCenterX(), 110, window.getCenterY());
@@ -50848,13 +50923,6 @@ ThreeFloorplan = function(scene, floorplan, controls) {
 			-1.5707963267948966,
 			scale,
 			false);
-    });
-
-    // draw edges
-    utils.forEach(scope.floorplan.wallEdges(), function(edge) {
-      var threeEdge = new ThreeEdge(
-        scene, edge, scope.controls);
-      scope.edges.push(threeEdge);
     });
   }
 }
@@ -51929,7 +51997,7 @@ var utils = {};
     var UndoManager = function() {
 
         var commands = [],
-            index = -1,
+          index = -1,
             limit = 0,
             isExecuting = false,
             callback,
@@ -51954,6 +52022,26 @@ var utils = {};
             /*
             Add a command to the queue.
             */
+            addData: function (cornersT, wallsT, roomsT, windowsT, doorsT){
+              if (isExecuting) {
+                    return this;
+                }
+              dataset.splice(index + 1, commands.length - index);
+              var data = {corners:cornersT, walls:wallsT, rooms:roomsT, windows:windowsT, doors:doorsT};
+              dataset.push(data);
+			  // if limit is set, remove items from the start
+			  if (limit && dataset.length > limit) {
+			  	removeFromTo(dataset, 0, -(limit+1));
+			  }
+
+			  // set the current index to the end
+			  index = dataset.length - 1;
+			  if (callback) {
+				callback();
+			  }
+			  return this;
+            },
+
             add: function (command) {
                 if (isExecuting) {
                     return this;
@@ -52040,6 +52128,10 @@ var utils = {};
 
             getCommands: function () {
                 return commands;
+            },
+
+            getDataset: function () {
+             	 return dataset;
             },
 
             getIndex: function() {
