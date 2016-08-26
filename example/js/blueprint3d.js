@@ -45185,6 +45185,7 @@ global.Blueprint3d = function(opts) {
 			if (detachRoom==true){
 		// not fix bug
 		// detach walls with having in other rooms
+		  floorplan.update();
 		  var cornersManyRoomsList = scope.activeRoom.getCornersInManyRooms();
 		  var cornersARoomList = scope.activeRoom.getCornersInOnlyARoom();
 		  var cornersCloneList = [];
@@ -45192,7 +45193,6 @@ global.Blueprint3d = function(opts) {
 			var corner = floorplan.newCorner(cornersManyRoomsList[i].x, cornersManyRoomsList[i].y);
 			cornersCloneList.push(corner);
 		  }
-
 
 		   for (var i=0; cornersManyRoomsList!= null && i<cornersManyRoomsList.length; i++){
 			for (var j=0; cornersManyRoomsList[i].wallStarts!=null && j<cornersManyRoomsList[i].wallStarts.length; j++){
@@ -45206,7 +45206,9 @@ global.Blueprint3d = function(opts) {
 				floorplan.newWall(cornersCloneList[i], endCorner);
 			  }
 			}
+		  }
 
+		  for (var i=0; cornersManyRoomsList!= null && i<cornersManyRoomsList.length; i++){
 			for (var j=0; cornersManyRoomsList[i].wallEnds!=null && j<cornersManyRoomsList[i].wallEnds.length; j++){
 			  var indexCornerNotInRoomList = scope.activeRoom.getCorners().indexOf(cornersManyRoomsList[i].wallEnds[j].getStart());
 			  if (indexCornerNotInRoomList==-1){
@@ -45227,6 +45229,18 @@ global.Blueprint3d = function(opts) {
 				var detachWall = cornersManyRoomsList[i].wallStarts[j];
 				var endCorner = cornersCloneList[indexCornerInMultipleRoomList];
 				floorplan.newWall(cornersCloneList[i], endCorner);
+			  }
+			}
+		   }
+
+		    for (var i=0; cornersManyRoomsList!= null && i<cornersManyRoomsList.length; i++){
+			for (var j=0; cornersManyRoomsList[i].wallEnds!=null && j<cornersManyRoomsList[i].wallEnds.length; j++){
+
+			  var indexCornerInMultipleRoomList = cornersManyRoomsList.indexOf(cornersManyRoomsList[i].wallEnds[j].getStart());
+			  if (indexCornerInMultipleRoomList>-1){
+				var detachWall = cornersManyRoomsList[i].wallEnds[j];
+				var startCorner = cornersCloneList[indexCornerInMultipleRoomList];
+				floorplan.newWall(startCorner, cornersCloneList[i]);
 			  }
 			}
 		   }
@@ -45349,8 +45363,6 @@ global.Blueprint3d = function(opts) {
 
 		// drawing
 		// consider: draw a linne and it cuts many other lines will create many intersection corners
-		var s = floorplan.getWalls();
-		var s1 = floorplan.getCorners();
 		if (scope.mode == scope.modes.DRAW && !mouseMoved) {
 		  var corner = floorplan.newCorner(scope.targetX, scope.targetY);
 		  if (scope.lastNode != null) {
@@ -45416,7 +45428,7 @@ global.Blueprint3d = function(opts) {
 		}
 		mouseClick = true;
 
-
+        // not fix bug
 		// merger corners having the same position
 		/*corners = floorplan.getCorners();
 		for (var i=0; i<corners.length; i++){
@@ -47924,6 +47936,13 @@ var JQUERY = require('jquery');
 		  rooms.push(new Room(scope, corners));
 		});
 
+		for (var i=0; i<lastRooms.length-1; i++){
+		  for (var j=i+1; j<lastRooms.length; j++){
+		    if (lastRooms[i].id==lastRooms[j].id)
+		      lastRooms[j].setId(utils.guid());
+		  }
+		}
+
 		for (var i=0; i<lastRooms.length; i++){
 		  for (var j=0; j<rooms.length; j++)
 		    if (lastRooms[i].checkIsOne(rooms[j])==true){
@@ -48683,11 +48702,15 @@ var JQUERY = require('jquery');
 	    var cornerList = [];
 	    updateWalls();
 	    utils.forEach(scope.corners, function(corner){
-	      for (var i=0; i<floorplan.getRooms().length; i++){
-	        if ((floorplan.getRooms()[i].id!=scope.id) && (floorplan.getRooms()[i].getCorners().indexOf(corner))>-1){
-	          cornerList.push(corner);
-	        }
+	      var flag = false;
+	      utils.forEach(floorplan.getRooms(), function(room){
+	        if ((room.id!=scope.id) && (room.getCorners().indexOf(corner))>-1)
+	          flag = true;
+	      });
+	      if (flag){
+	        cornerList.push(corner);
 	      }
+
 	    });
 	    return cornerList;
 	  }
