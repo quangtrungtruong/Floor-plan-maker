@@ -3,7 +3,7 @@
 
 This repository is forked from https://github.com/furnishup/blueprint3d/
 
-This is a customizable application built on three.js that allows users to design an interior space such as a home or apartment. Below are screenshots from our Example App (link above). 
+This is a customizable application built on three.js that allows users to design an interior space such as a home or apartment.
 
 ## Developing and Running Locally
 
